@@ -1,0 +1,320 @@
+.dashboard {
+  display: grid;
+  gap: 16px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(142px, 1fr));
+  gap: 12px;
+}
+
+.metric-card,
+.panel,
+.shortcut,
+.module-panel,
+.module-grid article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.26);
+}
+
+.metric-card {
+  min-height: 136px;
+  padding: 16px;
+}
+
+.metric-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #bfd3e8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.metric-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.metric-value strong {
+  color: var(--text);
+  font-size: 38px;
+  line-height: 1;
+}
+
+.metric-value span,
+.metric-card p {
+  color: var(--muted);
+}
+
+.metric-card p {
+  margin: 14px 0 0;
+  font-size: 12px;
+}
+
+.tone-blue { --tone: var(--blue); }
+.tone-cyan { --tone: var(--cyan); }
+.tone-green { --tone: var(--green); }
+.tone-red { --tone: var(--red); }
+.tone-orange { --tone: var(--amber); }
+.tone-purple { --tone: var(--purple); }
+
+.metric-card svg,
+.activity-marker {
+  color: var(--tone);
+}
+
+.dashboard-main {
+  display: grid;
+  grid-template-columns: minmax(560px, 1.45fr) minmax(380px, 1fr);
+  gap: 16px;
+}
+
+.panel {
+  min-width: 0;
+  padding: 16px;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.panel-title h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.panel-title span {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.topology-map {
+  position: relative;
+  height: 282px;
+  border: 1px solid rgba(94, 151, 198, 0.18);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+    rgba(5, 18, 33, 0.78);
+  background-size: 34px 34px;
+}
+
+.topology-node {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+  width: 86px;
+  height: 70px;
+  place-items: center;
+  border: 1px solid rgba(119, 197, 255, 0.38);
+  border-radius: 8px;
+  background: rgba(9, 32, 57, 0.92);
+  color: #dff5ff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.node-grid { left: 28px; top: 102px; }
+.node-meter { left: 154px; top: 102px; }
+.node-pcs { left: 288px; top: 92px; width: 110px; height: 96px; }
+.node-pmu { left: 300px; top: 18px; }
+.node-bms { right: 28px; top: 102px; }
+.node-battery { right: 144px; top: 102px; }
+
+.link {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--green), transparent);
+}
+
+.link-a { left: 114px; top: 137px; width: 42px; }
+.link-b { left: 240px; top: 137px; width: 50px; }
+.link-c { right: 114px; top: 137px; width: 32px; }
+.link-d { left: 354px; top: 80px; width: 2px; height: 28px; }
+
+.trend-panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.trend-chart {
+  min-height: 232px;
+}
+
+.trend-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+}
+
+.grid-line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+
+.trend-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.trend-line.power { stroke: var(--blue); }
+.trend-line.soc { stroke: var(--green); }
+.trend-line.quality { stroke: var(--amber); }
+
+.trend-tick {
+  fill: var(--muted);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.trend-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.trend-stats div {
+  padding: 10px;
+  border: 1px solid rgba(120, 178, 225, 0.2);
+  border-radius: 8px;
+  background: rgba(16, 38, 65, 0.62);
+}
+
+.trend-stats span,
+.trend-stats strong {
+  display: block;
+}
+
+.trend-stats span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.trend-stats strong {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.shortcut {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 2px 12px;
+  min-height: 82px;
+  padding: 14px;
+  text-align: left;
+}
+
+.shortcut svg {
+  grid-row: span 2;
+  color: var(--cyan);
+}
+
+.shortcut span {
+  align-self: end;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.shortcut small {
+  color: var(--muted);
+}
+
+.dashboard-bottom {
+  display: grid;
+  grid-template-columns: minmax(540px, 1.4fr) minmax(380px, 1fr);
+  gap: 16px;
+}
+
+th,
+td {
+  padding: 11px 10px;
+  border-bottom: 1px solid rgba(128, 175, 220, 0.14);
+  color: #d7e7f7;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.state-dot {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.run-badge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(101, 212, 110, 0.14);
+  color: var(--green);
+  font-weight: 800;
+}
+
+.activity-list {
+  display: grid;
+  gap: 8px;
+}
+
+.activity-item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  min-height: 54px;
+  padding: 10px;
+  border: 1px solid rgba(128, 175, 220, 0.14);
+  border-radius: 8px;
+}
+
+.activity-marker {
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.activity-item strong,
+.activity-item p {
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-item p,
+.activity-item time {
+  color: var(--muted);
+  font-size: 12px;
+}

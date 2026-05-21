@@ -1,0 +1,3507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICStudio - 工业通用调试与控制一体化上位机系统</title>
+  <style>
+    /* =========================================================================
+       1. CORE DESIGN SYSTEM (HIGH-END GLASSMORPHISM)
+       ========================================================================= */
+    :root {
+      /* 曜黑深邃极光弥散渐变 - 不再是死黑，而是华丽的曜黑与极光蓝交织 */
+      --bg-dark: #02040c;
+      --bg-gradient: radial-gradient(circle at 10% 20%, #061132 0%, #02040b 60%, #010207 100%);
+
+      /* 高透光率 Vision Pro 磨砂卡片 */
+      --glass-bg: rgba(6, 12, 32, 0.35);
+      --glass-bg-hover: rgba(10, 22, 54, 0.48);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-border-hover: rgba(0, 242, 254, 0.5);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45),
+        inset 0 1px 1px rgba(255, 255, 255, 0.12),
+        0 0 15px rgba(59, 130, 246, 0.08);
+
+      /* 未来科技霓虹强调色 - 极高饱和度 */
+      --neon-cyan: #00f2fe;
+      --neon-blue: #3b82f6;
+      --neon-green: #10b981;
+      --neon-red: #f43f5e;
+      --neon-purple: #a855f7;
+      --neon-orange: #f59e0b;
+
+      /* 排版色彩 */
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.72);
+      --text-muted: rgba(255, 255, 255, 0.45);
+
+      --sidebar-width: 250px;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    /* 牛奶玻璃亮色模式 */
+    [data-theme="light"] {
+      --bg-dark: #f0f4f8;
+      --bg-gradient: radial-gradient(circle at 10% 20%, #e2ebf0 0%, #cfd9df 100%);
+      --glass-bg: rgba(255, 255, 255, 0.45);
+      --glass-bg-hover: rgba(255, 255, 255, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.4);
+      --glass-border-hover: rgba(0, 242, 254, 0.6);
+      --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.06),
+        inset 0 1px 1px rgba(255, 255, 255, 0.6),
+        0 0 10px rgba(59, 130, 246, 0.05);
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      outline: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: var(--bg-gradient);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    /* 巨型弥散极光背景布局 - 饱满通透 */
+    .ambient-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.38;
+      mix-blend-mode: screen;
+      animation: floatOrb 22s infinite ease-in-out alternate;
+    }
+
+    [data-theme="light"] .ambient-orb {
+      opacity: 0.15;
+      mix-blend-mode: multiply;
+      filter: blur(120px);
+    }
+
+    .orb-indigo {
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.85) 0%, rgba(79, 70, 229, 0) 70%);
+      top: -15%;
+      left: 10%;
+      animation-duration: 25s;
+    }
+
+    .orb-cyan {
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.65) 0%, rgba(0, 242, 254, 0) 70%);
+      bottom: -10%;
+      right: 5%;
+      animation-duration: 20s;
+    }
+
+    .orb-pink {
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(219, 39, 119, 0.55) 0%, rgba(219, 39, 119, 0) 70%);
+      top: 30%;
+      left: 40%;
+      animation-duration: 28s;
+    }
+
+    .orb-purple {
+      width: 750px;
+      height: 750px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.6) 0%, rgba(168, 85, 247, 0) 70%);
+      top: -5%;
+      right: 25%;
+      animation-duration: 26s;
+    }
+
+    @keyframes floatOrb {
+      0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+      }
+
+      50% {
+        transform: translate(6%, 8%) scale(1.18) rotate(180deg);
+      }
+
+      100% {
+        transform: translate(-6%, -5%) scale(0.92) rotate(360deg);
+      }
+    }
+
+    /* 自定义科技感滚动条 */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 242, 254, 0.4);
+    }
+
+    /* =========================================================================
+       2. LAYOUT & SIDEBAR (清透玻璃态)
+       ========================================================================= */
+    #sidebar {
+      width: var(--sidebar-width);
+      background: rgba(4, 8, 20, 0.38);
+      backdrop-filter: blur(35px);
+      -webkit-backdrop-filter: blur(35px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      z-index: 10;
+      position: relative;
+    }
+
+    [data-theme="light"] #sidebar {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding-left: 8px;
+    }
+
+    /* 3D 立体六角发光 Logo */
+    .brand-logo-3d {
+      width: 32px;
+      height: 32px;
+      position: relative;
+      perspective: 100px;
+    }
+
+    .hexagon {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+      transform: rotateX(15deg) rotateY(15deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 5px var(--neon-cyan));
+    }
+
+    .hexagon-inner {
+      width: 60%;
+      height: 60%;
+      background: var(--bg-dark);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+    }
+
+    [data-theme="light"] .brand-name {
+      color: var(--text-primary);
+    }
+
+    .brand-sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-top: 1px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .menu-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border-color: var(--glass-border);
+      transform: translateX(2px);
+    }
+
+    .menu-item.active {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(6, 182, 212, 0.22));
+      color: #fff;
+      border-color: rgba(6, 182, 212, 0.45);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .menu-item svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--glass-border);
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-collapse {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .btn-collapse:hover {
+      color: var(--text-primary);
+    }
+
+    /* 3D 蓝色立方体科技感小装饰 */
+    .tech-cube-container {
+      width: 32px;
+      height: 32px;
+      perspective: 100px;
+      position: relative;
+    }
+
+    .tech-cube {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      transform-style: preserve-3d;
+      animation: rotateCube 6s infinite linear;
+    }
+
+    .cube-face {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: rgba(0, 242, 254, 0.25);
+      border: 1.2px solid var(--neon-cyan);
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+    }
+
+    .cube-front {
+      transform: translateZ(8px);
+    }
+
+    .cube-back {
+      transform: rotateY(180deg) translateZ(8px);
+    }
+
+    .cube-top {
+      transform: rotateX(90deg) translateZ(8px);
+    }
+
+    .cube-bottom {
+      transform: rotateX(-90deg) translateZ(8px);
+    }
+
+    .cube-left {
+      transform: rotateY(-90deg) translateZ(8px);
+    }
+
+    .cube-right {
+      transform: rotateY(90deg) translateZ(8px);
+    }
+
+    @keyframes rotateCube {
+      0% {
+        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+      }
+
+      100% {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+      }
+    }
+
+    /* =========================================================================
+       3. TOP HEADER BAR
+       ========================================================================= */
+    #content-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    #header-bar {
+      height: 58px;
+      background: rgba(4, 8, 20, 0.2);
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 8;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .project-capsule {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .project-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .project-select {
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .project-select option {
+      background: #081235;
+      color: #fff;
+    }
+
+    .conn-status-capsule {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 12px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--neon-green);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+    }
+
+    .breath-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--neon-green);
+      animation: pulseGreen 1.8s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.4;
+      }
+    }
+
+    .header-center {
+      width: 280px;
+      position: relative;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-bar {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 6px 12px 6px 32px;
+      font-size: 12px;
+      color: #fff;
+      transition: all 0.22s;
+    }
+
+    [data-theme="light"] .search-bar {
+      color: #000;
+    }
+
+    .search-bar:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-muted);
+    }
+
+    .search-shortcut {
+      position: absolute;
+      right: 10px;
+      font-size: 10px;
+      color: var(--text-muted);
+      border: 1px solid var(--glass-border);
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .btn-quick-flash {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+      border: none;
+      border-radius: 10px;
+      padding: 6px 14px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.45);
+      transition: all 0.22s;
+    }
+
+    .btn-quick-flash:hover {
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.65);
+      transform: translateY(-1px);
+    }
+
+    .btn-quick-flash:active {
+      transform: translateY(0) scale(0.97);
+    }
+
+    .bell-icon-wrapper {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+    }
+
+    .bell-icon-wrapper:hover {
+      color: #fff;
+    }
+
+    .bell-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 6px;
+      height: 6px;
+      background: var(--neon-red);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--neon-red);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .username {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    [data-theme="light"] .username {
+      color: var(--text-primary);
+    }
+
+    .user-role {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .time-stamp {
+      font-size: 10px;
+      font-family: "SF Mono", monospace;
+      color: var(--text-muted);
+      margin-left: 8px;
+      border-left: 1px solid var(--glass-border);
+      padding-left: 14px;
+    }
+
+    /* 主打的主题切换 */
+    .theme-toggle-btn {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      color: #fff;
+    }
+
+    /* =========================================================================
+       4. MAIN WORKSPACE CONTAINER
+       ========================================================================= */
+    #main-workspace {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .workspace-panel {
+      display: none;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .workspace-panel.active {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 极致磨砂冰晶卡片 */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      box-shadow: var(--glass-shadow);
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.03));
+      pointer-events: none;
+    }
+
+    .glass-card:hover {
+      border-color: var(--glass-border-hover);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(0, 242, 254, 0.18);
+      transform: translateY(-2px);
+    }
+
+    .card-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-title-text {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.2px;
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="light"] .card-title-text {
+      color: var(--text-primary);
+    }
+
+    /* =========================================================================
+       5. PANEL: DASHBOARD (首页总览)
+       ========================================================================= */
+    .grid-dashboard-metrics {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+    }
+
+    /* 6个小指标卡片样式 */
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 104px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-icon-small {
+      width: 14px;
+      height: 14px;
+      stroke: var(--neon-cyan);
+      fill: none;
+      stroke-width: 2.2;
+      filter: drop-shadow(0 0 3px var(--neon-cyan));
+    }
+
+    .metric-value-container {
+      margin-top: 10px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .metric-big-num {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: "SF Mono", monospace;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    }
+
+    [data-theme="light"] .metric-big-num {
+      color: var(--text-primary);
+    }
+
+    .metric-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .metric-footer {
+      font-size: 10px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .tag-green {
+      color: var(--neon-green);
+      background: rgba(16, 185, 129, 0.15);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .tag-red {
+      color: var(--neon-red);
+      background: rgba(244, 63, 94, 0.15);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .tag-orange {
+      color: var(--neon-orange);
+      background: rgba(245, 158, 11, 0.15);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* 健康度环形图卡片 */
+    .health-metric-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .health-circle-svg {
+      width: 54px;
+      height: 54px;
+      transform: rotate(-90deg);
+    }
+
+    .health-circle-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.05);
+      stroke-width: 5.5px;
+    }
+
+    .health-circle-fill {
+      fill: none;
+      stroke: url(#cyan-blue-grad);
+      stroke-width: 5.5px;
+      stroke-dasharray: 140;
+      stroke-dashoffset: 14;
+      /* 96% */
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 5px var(--neon-cyan));
+      animation: drawHealth 1.5s ease-out;
+    }
+
+    @keyframes drawHealth {
+      from {
+        stroke-dashoffset: 140;
+      }
+
+      to {
+        stroke-dashoffset: 14;
+      }
+    }
+
+    .health-num-center {
+      position: absolute;
+      left: 21px;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: "SF Mono", monospace;
+      color: #fff;
+      transform: rotate(90deg);
+    }
+
+    [data-theme="light"] .health-num-center {
+      color: var(--text-primary);
+    }
+
+    /* 第二行网格 */
+    .grid-dashboard-row2 {
+      display: grid;
+      grid-template-columns: 2.1fr 1fr;
+      gap: 20px;
+    }
+
+    /* 储能系统拓扑总览 */
+    .topo-diagram-card {
+      height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topo-area {
+      flex: 1;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      position: relative;
+      background: rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .topo-canvas-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* 精美发光椭圆镜面悬浮底座 */
+    .topo-base-plate {
+      position: absolute;
+      width: 80px;
+      height: 20px;
+      background: radial-gradient(ellipse, rgba(0, 242, 254, 0.25) 0%, rgba(59, 130, 246, 0.06) 60%, transparent 100%);
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      border-radius: 50%;
+      transform: rotateX(20deg);
+      bottom: -6px;
+      z-index: 1;
+      filter: blur(0.5px) drop-shadow(0 0 6px rgba(0, 242, 254, 0.5));
+    }
+
+    .topo-base-plate.green {
+      background: radial-gradient(ellipse, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.05) 60%, transparent 100%);
+      border-color: rgba(16, 185, 129, 0.35);
+      filter: blur(0.5px) drop-shadow(0 0 6px rgba(16, 185, 129, 0.5));
+    }
+
+    .topo-base-plate.purple {
+      background: radial-gradient(ellipse, rgba(168, 85, 247, 0.25) 0%, rgba(168, 85, 247, 0.05) 60%, transparent 100%);
+      border-color: rgba(168, 85, 247, 0.35);
+      filter: blur(0.5px) drop-shadow(0 0 6px rgba(168, 85, 247, 0.5));
+    }
+
+    /* 3D拟物模型盒子容器 */
+    .topo-3d-node {
+      position: absolute;
+      z-index: 2;
+      width: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .topo-3d-node:hover {
+      transform: translateY(-4px);
+    }
+
+    /* PCS 立体发光机柜 */
+    .pcs-cabinet-group {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      align-items: flex-end;
+      height: 52px;
+      margin-bottom: 8px;
+    }
+
+    .pcs-cabinet {
+      width: 15px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(8, 20, 52, 0.95), rgba(15, 32, 84, 0.8));
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      transform: rotateY(15deg);
+    }
+
+    .pcs-grid-line {
+      width: 80%;
+      height: 1.5px;
+      background: rgba(0, 242, 254, 0.6);
+      margin: 4px auto;
+      box-shadow: 0 0 4px rgba(0, 242, 254, 0.7);
+    }
+
+    .pcs-led {
+      position: absolute;
+      width: 2.2px;
+      height: 2.2px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 5px var(--neon-cyan);
+      top: 2px;
+      left: 2px;
+      animation: pulseGreen 0.6s infinite alternate;
+    }
+
+    /* 电池柜发光叠放设计 */
+    .batt-cabinet {
+      width: 28px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(16, 32, 24, 0.95), rgba(8, 20, 15, 0.8));
+      border: 1.2px solid var(--neon-green);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+      border-radius: 3px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      padding: 4px;
+    }
+
+    .batt-pack {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 1px;
+      position: relative;
+      overflow: hidden;
+      border: 0.5px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .batt-pack-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #00f2fe);
+      box-shadow: 0 0 5px var(--neon-green);
+    }
+
+    /* BMS 精致控制器盒 */
+    .bms-box {
+      width: 32px;
+      height: 26px;
+      background: linear-gradient(135deg, rgba(30, 20, 50, 0.95), rgba(15, 10, 30, 0.8));
+      border: 1.2px solid var(--neon-purple);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+      border-radius: 4px;
+      margin-top: 18px;
+      margin-bottom: 12px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bms-lcd {
+      width: 22px;
+      height: 12px;
+      background: #000;
+      border: 0.8px solid var(--neon-purple);
+      border-radius: 1px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .bms-lcd-wave {
+      width: 100%;
+      height: 60%;
+      stroke: var(--neon-purple);
+      stroke-width: 1;
+      fill: none;
+    }
+
+    /* 液冷风扇可旋转设计 */
+    .liquid-box {
+      width: 44px;
+      height: 38px;
+      background: linear-gradient(135deg, rgba(20, 20, 25, 0.95), rgba(10, 10, 12, 0.8));
+      border: 1.2px solid var(--neon-orange);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      position: relative;
+      padding: 0 4px;
+    }
+
+    .liquid-fan {
+      width: 14px;
+      height: 14px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2.2'%3E%3Ccircle cx='12' cy='12' r='3' fill='%23f59e0b'/%3E%3Cpath d='M12 2v7M12 15v7M2 12h7M15 12h7'/%3E%3C/svg%3E") no-repeat center/contain;
+      animation: rotateFan 1.8s infinite linear;
+    }
+
+    @keyframes rotateFan {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* 智能电表拟物 */
+    .meter-box {
+      width: 32px;
+      height: 38px;
+      background: linear-gradient(135deg, rgba(10, 30, 45, 0.95), rgba(5, 15, 25, 0.8));
+      border: 1.2px solid var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px;
+      gap: 3px;
+    }
+
+    .meter-screen {
+      width: 100%;
+      height: 8px;
+      background: #000;
+      border: 0.5px solid var(--neon-cyan);
+      border-radius: 1px;
+      font-size: 5px;
+      color: var(--neon-cyan);
+      font-family: monospace;
+      text-align: center;
+      line-height: 8px;
+    }
+
+    .meter-pulse {
+      width: 3px;
+      height: 3px;
+      background: var(--neon-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 4px var(--neon-cyan);
+      animation: pulseGreen 0.4s infinite alternate;
+    }
+
+    /* 节点的物理位置对齐图一 */
+    #node-grid {
+      top: 72px;
+      left: 50px;
+    }
+
+    #node-meter {
+      top: 165px;
+      left: 155px;
+    }
+
+    #node-pcs {
+      top: 62px;
+      left: 285px;
+    }
+
+    #node-bms {
+      top: 162px;
+      left: 415px;
+    }
+
+    #node-battery {
+      top: 62px;
+      left: 545px;
+    }
+
+    #node-liquid {
+      top: 252px;
+      left: 285px;
+    }
+
+    /* CSS 拟物立体电网铁塔 */
+    .grid-tower-icon {
+      width: 44px;
+      height: 48px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='1.6'%3E%3Cpath d='M12 2L5 22M12 2l7 20M2 17h20M5 11h14M12 2v20M12 7l-4 4h8l-4-4'/%3E%3C/svg%3E") no-repeat center/contain;
+      filter: drop-shadow(0 0 6px var(--neon-cyan));
+      margin-bottom: 8px;
+    }
+
+    .node-label-text {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.65);
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--glass-border);
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .node-status-sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 700;
+    }
+
+    /* 拓扑流线极其明亮饱满 */
+    .topo-path {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    .topo-flow-path {
+      stroke: var(--neon-cyan);
+      stroke-width: 2.5;
+      fill: none;
+      stroke-dasharray: 8, 14;
+      animation: dashflow 10s linear infinite;
+      filter: drop-shadow(0 0 6px var(--neon-cyan));
+    }
+
+    .topo-flow-path.green {
+      stroke: var(--neon-green);
+      filter: drop-shadow(0 0 6px var(--neon-green));
+    }
+
+    @keyframes dashflow {
+      to {
+        stroke-dashoffset: -300;
+      }
+    }
+
+    /* 关键指标趋势 - 横向并排三列 */
+    .trend-metrics-card {
+      height: 380px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .trend-mini-container-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .trend-mini-section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s;
+    }
+
+    .trend-mini-section:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(0, 242, 254, 0.25);
+    }
+
+    .trend-header-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .trend-title-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .trend-large-val {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: "SF Mono", monospace;
+      color: #fff;
+      letter-spacing: -0.5px;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="light"] .trend-large-val {
+      color: var(--text-primary);
+    }
+
+    .trend-canvas-container {
+      height: 180px;
+      margin-top: 8px;
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .trend-sparkline-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 第三行网格 */
+    .grid-dashboard-row3 {
+      display: grid;
+      grid-template-columns: 2.1fr 1fr;
+      gap: 20px;
+    }
+
+    /* 设备状态总览卡片 */
+    .device-table-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+    }
+
+    .quick-act-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn-action-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.22s;
+    }
+
+    .btn-action-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--neon-cyan);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+    }
+
+    .btn-action-pill:active {
+      transform: translateY(0) scale(0.97);
+    }
+
+    .btn-action-pill svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    /* 数据表格 */
+    .device-status-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      text-align: left;
+    }
+
+    .device-status-table th {
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .device-status-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--glass-border);
+      color: #fff;
+    }
+
+    [data-theme="light"] .device-status-table td {
+      color: var(--text-primary);
+    }
+
+    .device-status-table tr:hover td {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .indicator-dot-green {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--neon-green);
+      margin-right: 6px;
+    }
+
+    .status-capsule-green {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 10px;
+      color: var(--neon-green);
+      font-weight: 700;
+      display: inline-block;
+    }
+
+    .signal-bars-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 2.5px;
+    }
+
+    .signal-bar {
+      width: 3px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 1px;
+    }
+
+    .signal-bar.active {
+      background: var(--neon-green);
+      box-shadow: 0 0 5px var(--neon-green);
+    }
+
+    .btn-detail-pill {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--neon-blue);
+      border-radius: 8px;
+      padding: 3px 10px;
+      font-size: 10.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-detail-pill:hover {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--neon-blue);
+      color: #fff;
+    }
+
+    .table-footer {
+      margin-top: 14px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding-left: 12px;
+    }
+
+    /* 最近活动时间轴与发光彩点 */
+    .activity-logs-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+    }
+
+    .activity-timeline {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      margin-top: 8px;
+      padding-left: 12px;
+    }
+
+    .timeline-line {
+      position: absolute;
+      top: 10px;
+      left: 18px;
+      bottom: 10px;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      z-index: 1;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .activity-dot-outer {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      border: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 10px var(--neon-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 3px;
+    }
+
+    .activity-dot-outer.red {
+      border-color: var(--neon-red);
+      box-shadow: 0 0 10px var(--neon-red);
+    }
+
+    .activity-dot-outer.green {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green);
+    }
+
+    .activity-dot-outer.purple {
+      border-color: var(--neon-purple);
+      box-shadow: 0 0 10px var(--neon-purple);
+    }
+
+    .activity-dot-inner {
+      width: 5px;
+      height: 5px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .activity-detail {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .activity-msg-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .activity-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    [data-theme="light"] .activity-title {
+      color: var(--text-primary);
+    }
+
+    .activity-time-lbl {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    .activity-desc {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    /* =========================================================================
+       6. OTHER FUNCTION PANELS
+       ========================================================================= */
+    .panel-large-card {
+      min-height: 540px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 通信中心 */
+    .grid-comm-panel {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .comm-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-ctrl {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-ctrl label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .input-glass {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      color: #fff;
+      font-size: 12px;
+    }
+
+    [data-theme="light"] .input-glass {
+      color: #000;
+    }
+
+    .input-glass:focus {
+      border-color: var(--neon-cyan);
+    }
+
+    .btn-action-primary {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn-action-primary:hover {
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.5);
+    }
+
+    .console-terminal {
+      flex: 1;
+      background: rgba(4, 7, 18, 0.85);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 14px;
+      font-family: "SF Mono", monospace;
+      font-size: 11px;
+      overflow-y: auto;
+      color: var(--neon-cyan);
+      line-height: 1.6;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .terminal-line {
+      display: flex;
+      gap: 10px;
+    }
+
+    .terminal-line.tx {
+      color: var(--neon-blue);
+    }
+
+    .terminal-line.rx {
+      color: var(--neon-green);
+    }
+
+    .terminal-line.err {
+      color: var(--neon-red);
+    }
+
+    /* 多通道录波 / 示波器 */
+    .grid-waveform-panel {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .ch-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ch-item-capsule {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ch-item-capsule:hover {
+      border-color: var(--glass-border-hover);
+    }
+
+    .ch-item-capsule.active {
+      border-color: var(--ch-color);
+      box-shadow: 0 0 12px rgba(var(--ch-color-rgb), 0.25);
+    }
+
+    .ch-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ch-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ch-color);
+      box-shadow: 0 0 8px var(--ch-color);
+    }
+
+    .ch-title-lbl {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    [data-theme="light"] .ch-title-lbl {
+      color: var(--text-primary);
+    }
+
+    .oscilloscope-screen-wrapper {
+      flex: 1;
+      height: 420px;
+      background: rgba(3, 6, 14, 0.9);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #osc-canvas-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .osc-toolbar-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding: 0 4px;
+    }
+
+    .slider-range-apple {
+      -webkit-appearance: none;
+      width: 100px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    .slider-range-apple::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 6px var(--neon-cyan);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .slider-range-apple::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    /* 固件升级 YModem */
+    .grid-ymodem-cols {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 20px;
+    }
+
+    .upgrade-steps-stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .ymodem-step-capsule {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .ymodem-step-capsule.active {
+      color: var(--neon-cyan);
+      font-weight: 700;
+    }
+
+    .ymodem-step-capsule.success {
+      color: var(--neon-green);
+    }
+
+    .ymodem-step-index {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-family: monospace;
+      font-weight: 700;
+      transition: all 0.3s;
+    }
+
+    .ymodem-step-capsule.active .ymodem-step-index {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.15);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
+    }
+
+    .ymodem-step-capsule.success .ymodem-step-index {
+      border-color: var(--neon-green);
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--neon-green);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+    }
+
+    .progress-bar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 18px;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+      box-shadow: 0 0 10px var(--neon-cyan);
+      transition: width 0.2s linear;
+    }
+
+    /* 自动化测试 */
+    .autotest-list-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .autotest-row-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s;
+    }
+
+    .autotest-row-item:hover {
+      border-color: var(--glass-border-hover);
+      transform: translateY(-1px);
+    }
+
+    .autotest-meta-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .autotest-case-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    [data-theme="light"] .autotest-case-name {
+      color: var(--text-primary);
+    }
+
+    .autotest-case-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .autotest-badge-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+    }
+
+    .autotest-badge-tag.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--neon-green);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .autotest-badge-tag.running {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--neon-cyan);
+      border-color: rgba(6, 182, 212, 0.3);
+      animation: pulseGreen 1.8s infinite;
+    }
+
+    .autotest-badge-tag.idle {
+      color: var(--text-secondary);
+    }
+
+    /* IOS样式清透毛玻璃Toast提示 */
+    #toast-notice-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .toast-glass-capsule {
+      background: rgba(10, 18, 42, 0.88);
+      border: 1px solid var(--glass-border);
+      border-left: 4px solid var(--neon-cyan);
+      border-radius: 10px;
+      padding: 12px 18px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 280px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      animation: slideInCapsule 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      pointer-events: auto;
+    }
+
+    @keyframes slideInCapsule {
+      from {
+        transform: translateX(120%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast-glass-capsule.success {
+      border-left-color: var(--neon-green);
+    }
+
+    .toast-glass-capsule.warning {
+      border-left-color: var(--neon-orange);
+    }
+
+    .toast-glass-capsule.error {
+      border-left-color: var(--neon-red);
+    }
+
+    .toast-close-btn {
+      margin-left: auto;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .toast-close-btn:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 饱满弥散极光背景 -->
+  <div class="ambient-glow">
+    <div class="ambient-orb orb-indigo"></div>
+    <div class="ambient-orb orb-cyan"></div>
+    <div class="ambient-orb orb-pink"></div>
+    <div class="ambient-orb orb-purple"></div>
+  </div>
+
+  <!-- 1. LEFT SIDEBAR -->
+  <div id="sidebar">
+    <div class="brand-section">
+      <div class="brand-logo-3d">
+        <div class="hexagon">
+          <div class="hexagon-inner"></div>
+        </div>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">ICStudio</span>
+        <span class="brand-sub">工控上位机平台</span>
+      </div>
+    </div>
+
+    <ul class="sidebar-menu">
+      <li>
+        <a class="menu-item active" data-target="panel-dashboard">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="9" rx="1" />
+            <rect x="14" y="3" width="7" height="5" rx="1" />
+            <rect x="14" y="12" width="7" height="9" rx="1" />
+            <rect x="3" y="16" width="7" height="5" rx="1" />
+          </svg>
+          首页总览
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-comm">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+          </svg>
+          通信中心
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-protocol">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+          </svg>
+          协议管理
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-dev-manage">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0-2-.9-2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z" />
+          </svg>
+          设备管理
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-monitor">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z" />
+          </svg>
+          实时监控
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-params">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+          </svg>
+          参数配置
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-waveform">
+          <svg viewBox="0 0 24 24">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+          运行仿真
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-alarm">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+          </svg>
+          告警管理
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-autotest">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+          </svg>
+          自动化测试
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-simulator">
+          <svg viewBox="0 0 24 24">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <path d="M8 21h8M12 17v4" />
+          </svg>
+          从机模拟
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-data-srv">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 7.93-.38.04-.76.04-1.14 0C7.05 20.47 3.5 18 3.5 13c0-4.5 3.5-6.5 7.66-6.93.38-.04.76-.04 1.14 0C16.5 6.5 20 8.5 20 13z" />
+          </svg>
+          数据服务
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-report">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+          </svg>
+          报表中心
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-upgrade">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
+          </svg>
+          固件升级
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" data-target="panel-settings">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+          </svg>
+          系统设置
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="btn-collapse">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span>收起菜单</span>
+      </div>
+      <div class="tech-cube-container">
+        <div class="tech-cube">
+          <div class="cube-face cube-front"></div>
+          <div class="cube-face cube-back"></div>
+          <div class="cube-face cube-top"></div>
+          <div class="cube-face cube-bottom"></div>
+          <div class="cube-face cube-left"></div>
+          <div class="cube-face cube-right"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. RIGHT CONTENT AREA -->
+  <div id="content-wrapper">
+    <!-- TOP BAR -->
+    <div id="header-bar">
+      <div class="header-left">
+        <div class="project-capsule">
+          <span class="project-label">当前项目:</span>
+          <select class="project-select">
+            <option>储能系统测试项目</option>
+            <option>微电网控制器部署</option>
+            <option>BMS标定与测试环境</option>
+          </select>
+        </div>
+        <div class="conn-status-capsule">
+          <div class="breath-dot"></div>
+          <span>已连接</span>
+          <span style="opacity:0.5;margin:0 4px;">|</span>
+          <span style="font-family:monospace;letter-spacing:0.3px;">10.10.1.100:502</span>
+          <svg viewBox="0 0 24 24"
+            style="width:11px;height:11px;stroke:currentColor;stroke-width:2.5;fill:none;margin-left:4px;">
+            <path
+              d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <input type="text" class="search-bar" placeholder="搜索功能、设备、参数...">
+          <span class="search-shortcut">⌘ K</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="btn-quick-flash" id="btn-quick-flash">
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor">
+            <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+          </svg>
+          快捷操作
+          <svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:3">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+
+        <div class="bell-icon-wrapper">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <div class="bell-dot"></div>
+        </div>
+
+        <div class="theme-toggle-btn" id="btn-theme-toggle">
+          <!-- 太阳图标 -->
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2">
+            <circle cx="12" cy="12" r="5" />
+            <path
+              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+          </svg>
+        </div>
+
+        <div class="user-profile">
+          <div class="avatar">U</div>
+          <div class="user-info">
+            <span class="username">User</span>
+            <span class="user-role">管理员</span>
+          </div>
+        </div>
+
+        <span class="time-stamp" id="lbl-live-time">2025-05-27 10:24:36</span>
+      </div>
+    </div>
+
+    <!-- MAIN WORKSPACE -->
+    <div id="main-workspace">
+
+      <!-- =========================================================================
+           PANEL: DASHBOARD (首页总览)
+           ========================================================================= -->
+      <div class="workspace-panel active" id="panel-dashboard">
+        <!-- 行1: 6个指标卡片 -->
+        <div class="grid-dashboard-metrics">
+          <!-- 1. 系统健康度 -->
+          <div class="glass-card metric-card">
+            <span class="metric-label">
+              <svg class="metric-icon-small" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              系统健康度
+              <svg style="width:10px;height:10px;stroke:rgba(255,255,255,0.4);cursor:pointer;" viewBox="0 0 24 24"
+                fill="none" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+            </span>
+            <div class="health-metric-content">
+              <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+                <svg class="health-circle-svg">
+                  <defs>
+                    <linearGradient id="cyan-blue-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="var(--neon-blue)" />
+                      <stop offset="100%" stop-color="var(--neon-cyan)" />
+                    </linearGradient>
+                  </defs>
+                  <circle class="health-circle-bg" cx="27" cy="27" r="22" />
+                  <circle class="health-circle-fill" cx="27" cy="27" r="22" />
+                </svg>
+                <span class="health-num-center">96</span>
+              </div>
+              <div style="display:flex;flex-direction:column;">
+                <span style="font-size:16px;font-weight:800;color:#fff;">优秀</span>
+                <span style="font-size:9px;color:var(--neon-green);margin-top:1px;font-weight:700;">较昨日 ↑ 2 分</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 在线设备 -->
+          <div class="glass-card metric-card">
+            <span class="metric-label">
+              <svg class="metric-icon-small" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="8" rx="2" />
+                <rect x="2" y="14" width="20" height="8" rx="2" />
+              </svg>
+              在线设备
+            </span>
+            <div class="metric-value-container">
+              <span class="metric-big-num">12</span>
+              <span class="metric-unit">台</span>
+            </div>
+            <div class="metric-footer">
+              <span class="tag-green"><span class="indicator-dot-green"></span>正常 12</span>
+              <span style="color:var(--text-muted)">异常 0</span>
+            </div>
+          </div>
+
+          <!-- 3. 活动告警 -->
+          <div class="glass-card metric-card">
+            <span class="metric-label">
+              <svg class="metric-icon-small" viewBox="0 0 24 24">
+                <path
+                  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01" />
+              </svg>
+              活动告警
+            </span>
+            <div class="metric-value-container">
+              <span class="metric-big-num" style="color:var(--neon-red)">2</span>
+              <span class="metric-unit">条</span>
+            </div>
+            <div class="metric-footer">
+              <span class="tag-red">紧急 1</span>
+              <span class="tag-orange">重要 1</span>
+            </div>
+          </div>
+
+          <!-- 4. 运行仿真 -->
+          <div class="glass-card metric-card">
+            <span class="metric-label">
+              <svg class="metric-icon-small" viewBox="0 0 24 24">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+              运行仿真
+            </span>
+            <div class="metric-value-container">
+              <span class="metric-big-num">3</span>
+              <span class="metric-unit">个</span>
+            </div>
+            <div class="metric-footer">
+              <span style="color:var(--neon-blue);font-weight:700;"><span class="indicator-dot-green"
+                  style="background:var(--neon-blue);box-shadow:0 0 6px var(--neon-blue);"></span>运行中 3</span>
+            </div>
+          </div>
+
+          <!-- 5. 自动化测试 -->
+          <div class="glass-card metric-card">
+            <span class="metric-label">
+              <svg class="metric-icon-small" viewBox="0 0 24 24">
+                <path d="M9 11l3 3L22 4m-2-2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8" />
+              </svg>
+              自动化测试
+            </span>
+            <div class="metric-value-container">
+              <span class="metric-big-num">5</span>
+              <span class="metric-unit">项</span>
+            </div>
+            <div class="metric-footer">
+              <span style="color:var(--text-secondary)">运行中 2</span>
+              <span class="tag-green" style="margin-left:auto;">通过率 92%</span>
+            </div>
+          </div>
+
+          <!-- 6. 固件升级 -->
+          <div class="glass-card metric-card">
+            <span class="metric-label">
+              <svg class="metric-icon-small" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+              </svg>
+              固件升级
+            </span>
+            <div class="metric-value-container">
+              <span class="metric-big-num">1</span>
+              <span class="metric-unit">项</span>
+            </div>
+            <div class="metric-footer">
+              <span style="color:var(--text-secondary)">进行中 1</span>
+              <span class="tag-green" style="margin-left:auto;">成功 87%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 行2: 拓扑图与并排关键指标趋势 -->
+        <div class="grid-dashboard-row2">
+          <!-- 储能物理拓扑图 -->
+          <div class="glass-card topo-diagram-card">
+            <div class="card-header-bar">
+              <span class="card-title-text">储能系统拓扑总览</span>
+              <span
+                style="font-size:10.5px;color:var(--neon-green);font-weight:700;display:flex;align-items:center;gap:5px;">
+                <span class="breath-dot"></span> 拓扑状态：正常
+              </span>
+            </div>
+
+            <div class="topo-area">
+              <!-- SVG 连接线与明亮流光线 -->
+              <svg class="topo-canvas-svg">
+                <!-- 静态连线 -->
+                <path class="topo-path" d="M 90,95 L 190,195" />
+                <path class="topo-path" d="M 190,195 L 340,95" />
+                <path class="topo-path" d="M 340,95 L 470,195" />
+                <path class="topo-path" d="M 470,195 L 590,95" />
+                <path class="topo-path" d="M 340,95 L 340,250" />
+
+                <!-- 动态发光霓虹流光线 -->
+                <path class="topo-flow-path" d="M 90,95 L 190,195" />
+                <path class="topo-flow-path" d="M 190,195 L 340,95" />
+                <path class="topo-flow-path" d="M 340,95 L 470,195" />
+                <path class="topo-flow-path" d="M 470,195 L 590,95" />
+                <path class="topo-flow-path green" d="M 340,95 L 340,250" />
+              </svg>
+
+              <!-- 1. 电网 (科技感铁塔) -->
+              <div class="topo-3d-node" id="node-grid">
+                <div class="grid-tower-icon"></div>
+                <div class="topo-base-plate"></div>
+                <span class="node-label-text">电网</span>
+                <span class="node-status-sub">220kV 高压</span>
+              </div>
+
+              <!-- 2. 电表 (智能电表) -->
+              <div class="topo-3d-node" id="node-meter">
+                <div class="meter-box">
+                  <div class="meter-screen">0.4kW</div>
+                  <div class="meter-pulse"></div>
+                </div>
+                <div class="topo-base-plate"></div>
+                <span class="node-label-text">智能电表</span>
+                <span class="node-status-sub">计量运行中</span>
+              </div>
+
+              <!-- 3. 变流柜 PCS (三台发光散热栅格机柜组) -->
+              <div class="topo-3d-node" id="node-pcs">
+                <div class="pcs-cabinet-group">
+                  <div class="pcs-cabinet">
+                    <div class="pcs-led"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                  </div>
+                  <div class="pcs-cabinet">
+                    <div class="pcs-led" style="animation-delay:0.2s"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                  </div>
+                  <div class="pcs-cabinet">
+                    <div class="pcs-led" style="animation-delay:0.4s"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                    <div class="pcs-grid-line"></div>
+                  </div>
+                </div>
+                <div class="topo-base-plate"></div>
+                <span class="node-label-text">PCS 集群</span>
+                <span class="node-status-sub" style="color:var(--neon-green)">运行中 (3台)</span>
+              </div>
+
+              <!-- 4. BMS箱 (带发光波形 LCD 屏) -->
+              <div class="topo-3d-node" id="node-bms">
+                <div class="bms-box">
+                  <div class="bms-lcd">
+                    <svg class="bms-lcd-wave" viewBox="0 0 20 10">
+                      <path d="M0,5 Q5,2 10,5 T20,5" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="topo-base-plate purple"></div>
+                <span class="node-label-text">BMS 控制箱</span>
+                <span class="node-status-sub">健康度优秀</span>
+              </div>
+
+              <!-- 5. 电池簇 (层叠电量刀片电池模组) -->
+              <div class="topo-3d-node" id="node-battery">
+                <div class="batt-cabinet">
+                  <div class="batt-pack">
+                    <div class="batt-pack-fill" style="width:78%"></div>
+                  </div>
+                  <div class="batt-pack">
+                    <div class="batt-pack-fill" style="width:80%"></div>
+                  </div>
+                  <div class="batt-pack">
+                    <div class="batt-pack-fill" style="width:76%"></div>
+                  </div>
+                </div>
+                <div class="topo-base-plate green"></div>
+                <span class="node-label-text">电池簇</span>
+                <span class="node-status-sub">SOC: 78.4%</span>
+              </div>
+
+              <!-- 6. 液冷系统 (带动态旋转双风扇) -->
+              <div class="topo-3d-node" id="node-liquid">
+                <div class="liquid-box">
+                  <div class="liquid-fan"></div>
+                  <div class="liquid-fan" style="animation-duration:1.2s"></div>
+                </div>
+                <div class="topo-base-plate"></div>
+                <span class="node-label-text">液冷主机</span>
+                <span class="node-status-sub">出水: 19.5℃</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 关键指标趋势 - 对标设计图横向三列并排精美卡片 -->
+          <div class="glass-card trend-metrics-card">
+            <div class="card-header-bar">
+              <span class="card-title-text">关键指标趋势</span>
+              <select
+                style="background:transparent;border:none;color:var(--text-muted);font-size:10px;font-weight:700;cursor:pointer;">
+                <option>最近 1 小时</option>
+                <option>最近 24 小时</option>
+              </select>
+            </div>
+
+            <div class="trend-mini-container-row">
+              <!-- 折线1: 功率 -->
+              <div class="trend-mini-section">
+                <div class="trend-header-row">
+                  <span class="trend-title-lbl">功率 (kW)</span>
+                  <span class="trend-large-val" id="val-trend-power">215.6</span>
+                </div>
+                <div class="trend-canvas-container">
+                  <canvas class="trend-sparkline-canvas" id="canvas-trend-power"></canvas>
+                </div>
+              </div>
+
+              <!-- 折线2: SOC -->
+              <div class="trend-mini-section">
+                <div class="trend-header-row">
+                  <span class="trend-title-lbl">SOC (%)</span>
+                  <span class="trend-large-val" id="val-trend-soc">78.4</span>
+                </div>
+                <div class="trend-canvas-container">
+                  <canvas class="trend-sparkline-canvas" id="canvas-trend-soc"></canvas>
+                </div>
+              </div>
+
+              <!-- 折线3: 通信质量 -->
+              <div class="trend-mini-section">
+                <div class="trend-header-row">
+                  <span class="trend-title-lbl">通信质量 (%)</span>
+                  <span class="trend-large-val" id="val-trend-comm">99.2</span>
+                </div>
+                <div class="trend-canvas-container">
+                  <canvas class="trend-sparkline-canvas" id="canvas-trend-comm"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 行3: 操作、列表与日志 -->
+        <div class="grid-dashboard-row3">
+          <!-- 设备状态表 -->
+          <div class="glass-card device-table-card">
+            <div class="quick-act-row">
+              <button class="btn-action-pill" onclick="triggerPillAction('连接')">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                打开连接
+              </button>
+              <button class="btn-action-pill" onclick="switchPanel('panel-monitor')">
+                <svg viewBox="0 0 24 24">
+                  <path d="M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
+                </svg>
+                进入实时监控
+              </button>
+              <button class="btn-action-pill" onclick="switchPanel('panel-simulator')">
+                <svg viewBox="0 0 24 24">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                  <path d="M8 21h8M12 17v4" />
+                </svg>
+                启动从机模拟
+              </button>
+              <button class="btn-action-pill" onclick="switchPanel('panel-autotest')">
+                <svg viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                运行自动化测试
+              </button>
+            </div>
+
+            <div class="card-header-bar" style="margin-bottom:8px;">
+              <span class="card-title-text">设备状态总览</span>
+            </div>
+
+            <table class="device-status-table">
+              <thead>
+                <tr>
+                  <th>设备名称</th>
+                  <th>设备类型</th>
+                  <th>连接状态</th>
+                  <th>运行状态</th>
+                  <th>通信质量</th>
+                  <th>最后上报</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-body-devices">
+                <tr>
+                  <td>PCS-01</td>
+                  <td>PCS</td>
+                  <td><span class="indicator-dot-green"></span>在线</td>
+                  <td><span class="status-capsule-green">运行中</span></td>
+                  <td>
+                    <div class="signal-bars-container">
+                      <div class="signal-bar active" style="height:4px"></div>
+                      <div class="signal-bar active" style="height:7px"></div>
+                      <div class="signal-bar active" style="height:10px"></div>
+                      <div class="signal-bar active" style="height:13px"></div>
+                      <span
+                        style="font-family:monospace;margin-left:5px;font-weight:700;color:var(--neon-green)">99.4%</span>
+                    </div>
+                  </td>
+                  <td style="font-family:monospace;" class="td-device-time">10:24:32</td>
+                  <td><button class="btn-detail-pill" onclick="toastMsg('success', '已获取 PCS-01 精细寄存器参数！')">详情</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>PCS-02</td>
+                  <td>PCS</td>
+                  <td><span class="indicator-dot-green"></span>在线</td>
+                  <td><span class="status-capsule-green">运行中</span></td>
+                  <td>
+                    <div class="signal-bars-container">
+                      <div class="signal-bar active" style="height:4px"></div>
+                      <div class="signal-bar active" style="height:7px"></div>
+                      <div class="signal-bar active" style="height:10px"></div>
+                      <div class="signal-bar active" style="height:13px"></div>
+                      <span
+                        style="font-family:monospace;margin-left:5px;font-weight:700;color:var(--neon-green)">98.7%</span>
+                    </div>
+                  </td>
+                  <td style="font-family:monospace;" class="td-device-time">10:24:31</td>
+                  <td><button class="btn-detail-pill" onclick="toastMsg('success', '已获取 PCS-02 精细寄存器参数！')">详情</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>BMS-01</td>
+                  <td>BMS</td>
+                  <td><span class="indicator-dot-green"></span>在线</td>
+                  <td><span class="status-capsule-green">运行中</span></td>
+                  <td>
+                    <div class="signal-bars-container">
+                      <div class="signal-bar active" style="height:4px"></div>
+                      <div class="signal-bar active" style="height:7px"></div>
+                      <div class="signal-bar active" style="height:10px"></div>
+                      <div class="signal-bar active" style="height:13px"></div>
+                      <span
+                        style="font-family:monospace;margin-left:5px;font-weight:700;color:var(--neon-green)">99.6%</span>
+                    </div>
+                  </td>
+                  <td style="font-family:monospace;" class="td-device-time">10:24:34</td>
+                  <td><button class="btn-detail-pill" onclick="toastMsg('success', '已获取 BMS-01 电芯数据！')">详情</button></td>
+                </tr>
+                <tr>
+                  <td>PMU-01</td>
+                  <td>PMU</td>
+                  <td><span class="indicator-dot-green"></span>在线</td>
+                  <td><span class="status-capsule-green">运行中</span></td>
+                  <td>
+                    <div class="signal-bars-container">
+                      <div class="signal-bar active" style="height:4px"></div>
+                      <div class="signal-bar active" style="height:7px"></div>
+                      <div class="signal-bar active" style="height:10px"></div>
+                      <div class="signal-bar active" style="height:13px"></div>
+                      <span
+                        style="font-family:monospace;margin-left:5px;font-weight:700;color:var(--neon-green)">100%</span>
+                    </div>
+                  </td>
+                  <td style="font-family:monospace;" class="td-device-time">10:24:35</td>
+                  <td><button class="btn-detail-pill" onclick="toastMsg('success', '已获取 PMU-01 网能配电参数！')">详情</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="table-footer">
+              <span class="indicator-dot-green"></span>在线 12 离线 0 异常 0 共 12 台设备
+            </div>
+          </div>
+
+          <!-- 最近活动日志 -->
+          <div class="glass-card activity-logs-card">
+            <div class="card-header-bar">
+              <span class="card-title-text">最近活动</span>
+              <span style="font-size:10px;color:var(--neon-blue);font-weight:700;cursor:pointer;"
+                onclick="toastMsg('success', '日志队列刷新完成')">查看全部</span>
+            </div>
+
+            <div class="activity-timeline">
+              <div class="timeline-line"></div>
+
+              <!-- 1. 告警 -->
+              <div class="activity-item">
+                <div class="activity-dot-outer red">
+                  <div class="activity-dot-inner"></div>
+                </div>
+                <div class="activity-detail">
+                  <div class="activity-msg-row">
+                    <span class="activity-title" style="color:var(--neon-red);">告警：PCS-02 交流过流保护</span>
+                    <span class="activity-time-lbl">10:23:18</span>
+                  </div>
+                  <span class="activity-desc">紧急告警 | 交流输出侧电流超过限保护设定限值</span>
+                </div>
+              </div>
+
+              <!-- 2. 测试完成 -->
+              <div class="activity-item">
+                <div class="activity-dot-outer">
+                  <div class="activity-dot-inner"></div>
+                </div>
+                <div class="activity-detail">
+                  <div class="activity-msg-row">
+                    <span class="activity-title">自动化测试用例执行完成</span>
+                    <span class="activity-time-lbl">10:22:45</span>
+                  </div>
+                  <span class="activity-desc">用例：E2E_充放电循环测试 | 结果：通过</span>
+                </div>
+              </div>
+
+              <!-- 3. 固件升级 -->
+              <div class="activity-item">
+                <div class="activity-dot-outer green">
+                  <div class="activity-dot-inner"></div>
+                </div>
+                <div class="activity-detail">
+                  <div class="activity-msg-row">
+                    <span class="activity-title">固件升级开始</span>
+                    <span class="activity-time-lbl">10:21:03</span>
+                  </div>
+                  <span class="activity-desc">设备：BMS-01 | 版本：v2.3.1</span>
+                </div>
+              </div>
+
+              <!-- 4. 连接建立 -->
+              <div class="activity-item">
+                <div class="activity-dot-outer"
+                  style="border-color:var(--neon-blue);box-shadow:0 0 10px var(--neon-blue);">
+                  <div class="activity-dot-inner"></div>
+                </div>
+                <div class="activity-detail">
+                  <div class="activity-msg-row">
+                    <span class="activity-title">通道已连接</span>
+                    <span class="activity-time-lbl">10:20:11</span>
+                  </div>
+                  <span class="activity-desc">Modbus_TCP_01 | 储能系统测试项目</span>
+                </div>
+              </div>
+
+              <!-- 5. 模拟启动 -->
+              <div class="activity-item">
+                <div class="activity-dot-outer purple">
+                  <div class="activity-dot-inner"></div>
+                </div>
+                <div class="activity-detail">
+                  <div class="activity-msg-row">
+                    <span class="activity-title">从机模拟已启动</span>
+                    <span class="activity-time-lbl">10:19:54</span>
+                  </div>
+                  <span class="activity-desc">模拟对象：PCS-01 | 策略：动态功率调度</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================================================================
+           PANEL: COMMUNICATION (通信中心)
+           ========================================================================= -->
+      <div class="workspace-panel" id="panel-comm">
+        <div class="glass-card panel-large-card">
+          <div class="card-header-bar">
+            <span class="card-title-text">Modbus 通信中心 & 报文调试终端</span>
+          </div>
+
+          <div class="grid-comm-panel">
+            <div class="comm-form-group">
+              <div class="form-ctrl">
+                <label>连接模式</label>
+                <select class="input-glass" id="comm-mode">
+                  <option value="tcp">Modbus TCP</option>
+                  <option value="rtu">Modbus RTU (串口)</option>
+                </select>
+              </div>
+              <div class="form-ctrl">
+                <label>目标 IP 地址 / 端口</label>
+                <input type="text" class="input-glass" id="comm-ip" value="10.10.1.100:502">
+              </div>
+              <div class="form-ctrl">
+                <label>从机 ID</label>
+                <input type="number" class="input-glass" value="1">
+              </div>
+              <div class="form-ctrl">
+                <label>读写心跳时间 (ms)</label>
+                <input type="number" class="input-glass" value="1000">
+              </div>
+              <button class="btn-action-primary" style="margin-top:12px;" onclick="toggleCommConnect()"
+                id="btn-comm-connect">断开连接</button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <span style="font-size:11px;font-weight:700;color:var(--text-secondary)">实时收发十六进制报文日志：</span>
+              <div class="console-terminal" id="comm-console">
+                <div class="terminal-line tx"><span>[10:24:35] [TX]</span><span>01 03 00 64 00 04 15 CA</span></div>
+                <div class="terminal-line rx"><span>[10:24:35] [RX]</span><span>01 03 08 00 E8 02 D6 03 E4 03 D8 6D
+                    AD</span></div>
+                <div class="terminal-line tx"><span>[10:24:36] [TX]</span><span>01 03 00 64 00 04 15 CA</span></div>
+                <div class="terminal-line rx"><span>[10:24:36] [RX]</span><span>01 03 08 00 E8 02 D6 03 E4 03 D8 6D
+                    AD</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================================================================
+           PANEL: WAVEFORM (运行仿真 - 示波器)
+           ========================================================================= -->
+      <div class="workspace-panel" id="panel-waveform">
+        <div class="glass-card panel-large-card">
+          <div class="card-header-bar">
+            <span class="card-title-text">四通道波形示波器运行仿真 (60fps)</span>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-action-primary" onclick="toggleWaveformRunning()" id="btn-waveform-run"
+                style="padding:4px 12px;font-size:11px;">停止录波</button>
+              <button class="btn-action-pill" onclick="clearWaveformCanvas()"
+                style="padding:4px 12px;font-size:11px;">清除屏幕</button>
+            </div>
+          </div>
+
+          <div class="grid-waveform-panel">
+            <div class="ch-list">
+              <span style="font-size:11px;font-weight:700;color:var(--text-secondary)">通道设置：</span>
+              <!-- CH1 -->
+              <div class="ch-item-capsule active" style="--ch-color:var(--neon-cyan);--ch-color-rgb:0,242,254;">
+                <div class="ch-meta-row">
+                  <div class="ch-badge-dot"></div>
+                  <span class="ch-title-lbl">CH1: 交流有功 (kW)</span>
+                </div>
+                <input type="checkbox" checked onclick="toggleCh(1)">
+              </div>
+              <!-- CH2 -->
+              <div class="ch-item-capsule active" style="--ch-color:var(--neon-blue);--ch-color-rgb:59,130,246;">
+                <div class="ch-meta-row">
+                  <div class="ch-badge-dot"></div>
+                  <span class="ch-title-lbl">CH2: 直流电压 (V)</span>
+                </div>
+                <input type="checkbox" checked onclick="toggleCh(2)">
+              </div>
+              <!-- CH3 -->
+              <div class="ch-item-capsule active" style="--ch-color:var(--neon-green);--ch-color-rgb:16,185,129;">
+                <div class="ch-meta-row">
+                  <div class="ch-badge-dot"></div>
+                  <span class="ch-title-lbl">CH3: 电芯温度 (℃)</span>
+                </div>
+                <input type="checkbox" checked onclick="toggleCh(3)">
+              </div>
+              <!-- CH4 -->
+              <div class="ch-item-capsule active" style="--ch-color:var(--neon-purple);--ch-color-rgb:168,85,247;">
+                <div class="ch-meta-row">
+                  <div class="ch-badge-dot"></div>
+                  <span class="ch-title-lbl">CH4: 液冷流速 (L/s)</span>
+                </div>
+                <input type="checkbox" checked onclick="toggleCh(4)">
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div class="oscilloscope-screen-wrapper">
+                <canvas id="osc-canvas-screen"></canvas>
+              </div>
+
+              <div class="osc-toolbar-controls">
+                <div style="display:flex;gap:16px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10.5px;color:var(--text-muted)">Timebase</span>
+                    <input type="range" class="slider-range-apple" min="1" max="10" value="5" id="slider-timebase">
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10.5px;color:var(--text-muted)">Trigger Level</span>
+                    <input type="range" class="slider-range-apple" min="0" max="100" value="50">
+                  </div>
+                </div>
+                <span style="font-size:11px;font-family:monospace;color:var(--text-muted)" id="lbl-osc-fps">60 FPS |
+                  Triggered</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================================================================
+           PANEL: PARAMETERS (参数配置)
+           ========================================================================= -->
+      <div class="workspace-panel" id="panel-params">
+        <div class="glass-card panel-large-card" style="min-height:480px;">
+          <div class="card-header-bar">
+            <span class="card-title-text">设备运行控制与 Modbus 寄存器参数写入</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:12px;">
+            <div class="comm-form-group" style="gap:16px;">
+              <span style="font-size:12px;font-weight:700;color:var(--text-secondary)">下发保护阈值配置：</span>
+              <div class="form-ctrl">
+                <label>交流过载保护阈值 (kW)</label>
+                <input type="number" class="input-glass" id="param-ac-power" value="450.0">
+              </div>
+              <div class="form-ctrl">
+                <label>直流母线过压保护 (V)</label>
+                <input type="number" class="input-glass" id="param-dc-volt" value="850">
+              </div>
+              <div class="form-ctrl">
+                <label>电芯过温警告阈值 (℃)</label>
+                <input type="number" class="input-glass" id="param-cell-temp" value="55.0">
+              </div>
+              <button class="btn-action-primary" style="margin-top:10px;" onclick="writeParamsToDev()">写入下位机寄存器</button>
+            </div>
+
+            <div class="comm-form-group" style="gap:16px;">
+              <span style="font-size:12px;font-weight:700;color:var(--text-secondary)">寄存器物理地址对照表：</span>
+              <table class="device-status-table" style="font-size:11px;">
+                <thead>
+                  <tr>
+                    <th>参数项</th>
+                    <th>寄存器地址</th>
+                    <th>数据类型</th>
+                    <th>倍率</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>交流过载阈值</td>
+                    <td style="font-family:monospace;">40001 (0x0000)</td>
+                    <td>UINT16</td>
+                    <td>10</td>
+                  </tr>
+                  <tr>
+                    <td>直流过压阈值</td>
+                    <td style="font-family:monospace;">40002 (0x0001)</td>
+                    <td>UINT16</td>
+                    <td>1</td>
+                  </tr>
+                  <tr>
+                    <td>过温告警阈值</td>
+                    <td style="font-family:monospace;">40003 (0x0002)</td>
+                    <td>INT16</td>
+                    <td>10</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================================================================
+           PANEL: AUTOTEST (自动化测试)
+           ========================================================================= -->
+      <div class="workspace-panel" id="panel-autotest">
+        <div class="glass-card panel-large-card">
+          <div class="card-header-bar">
+            <span class="card-title-text">工控设备全链路自动化联调测试</span>
+            <button class="btn-action-primary" onclick="runAutotestWorkflow()" id="btn-run-autotest">启动整组测试用例</button>
+          </div>
+
+          <div class="autotest-list-group">
+            <div class="autotest-row-item">
+              <div class="autotest-meta-group">
+                <span class="autotest-case-name">Case 01: 电网电压低电压穿越 (LVRT) 仿真测试</span>
+                <span class="autotest-case-desc">测试设备在电网突降至 20% 时是否保持并网且稳定输出无功</span>
+              </div>
+              <span class="autotest-badge-tag success" id="tag-case-1">测试通过</span>
+            </div>
+            <div class="autotest-row-item">
+              <div class="autotest-meta-group">
+                <span class="autotest-case-name">Case 02: 电池管理系统 (BMS) 紧急断开与热失控联动告警</span>
+                <span class="autotest-case-desc">测试电芯温度飙升至 60℃ 时是否瞬间触发液冷阀门及高压接触器紧急拉闸</span>
+              </div>
+              <span class="autotest-badge-tag idle" id="tag-case-2">待执行</span>
+            </div>
+            <div class="autotest-row-item">
+              <div class="autotest-meta-group">
+                <span class="autotest-case-name">Case 03: 变流器 PCS 动态功率四象限调度快速响应</span>
+                <span class="autotest-case-desc">在 50ms 内将有功输出由 -200kW 快速反转拉升至 +200kW 的充放电标定测试</span>
+              </div>
+              <span class="autotest-badge-tag success" id="tag-case-3">测试通过</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================================================================
+           PANEL: YMODEM UPGRADE (YModem 固件升级)
+           ========================================================================= -->
+      <div class="workspace-panel" id="panel-upgrade">
+        <div class="glass-card panel-large-card" style="min-height:480px;">
+          <div class="card-header-bar">
+            <span class="card-title-text">YMODEM 通信协议下位机固件升级</span>
+          </div>
+
+          <div class="grid-ymodem-cols" style="margin-top:12px;">
+            <div class="comm-form-group" style="gap:16px;">
+              <span style="font-size:12px;font-weight:700;color:var(--text-secondary)">固件文件上传与校验：</span>
+              <div class="form-ctrl">
+                <label>选择 BIN 固件包</label>
+                <input type="text" class="input-glass" value="ICStudio_PCS_Firmware_v2.3.2.bin"
+                  style="font-family:monospace;" readonly>
+              </div>
+              <div class="form-ctrl">
+                <label>文件大小与 SHA256 校验码</label>
+                <input type="text" class="input-glass" value="384.2 KB | 9ea2c50e41ab1d..."
+                  style="font-family:monospace;" readonly>
+              </div>
+              <button class="btn-action-primary" style="margin-top:8px;" onclick="startFirmwareUpgrade()"
+                id="btn-start-upgrade">开始 YModem 升级传输</button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <span style="font-size:12px;font-weight:700;color:var(--text-secondary)">升级传输步骤：</span>
+              <div class="upgrade-steps-stepper">
+                <div class="ymodem-step-capsule success" id="step-up-1">
+                  <div class="ymodem-step-index">1</div>
+                  <span>建立 YModem 通信握手 (发送 SOH 报文)</span>
+                </div>
+                <div class="ymodem-step-capsule" id="step-up-2">
+                  <div class="ymodem-step-index">2</div>
+                  <span>传输固件数据包 (发送 1024 字节数据帧)</span>
+                </div>
+                <div class="ymodem-step-capsule" id="step-up-3">
+                  <div class="ymodem-step-index">3</div>
+                  <span>传输完成校验并写入设备 flash</span>
+                </div>
+              </div>
+
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="upgrade-prog-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- IOS玻璃态 Toast 容器 -->
+  <div id="toast-notice-container"></div>
+
+  <!-- =========================================================================
+       7. JAVASCRIPT: LOGICAL SIMULATION ENGINE
+       ========================================================================= -->
+  <script>
+    /* --------------------------------------------------
+       7.1 面板切换与路由
+       -------------------------------------------------- */
+    const menuItems = document.querySelectorAll('.menu-item');
+    const workspacePanels = document.querySelectorAll('.workspace-panel');
+
+    menuItems.forEach(item => {
+      item.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetPanelId = this.getAttribute('data-target');
+
+        menuItems.forEach(mi => mi.classList.remove('active'));
+        this.classList.add('active');
+
+        switchPanel(targetPanelId);
+      });
+    });
+
+    function switchPanel(panelId) {
+      workspacePanels.forEach(panel => {
+        panel.classList.remove('active');
+        if (panel.id === panelId) {
+          panel.classList.add('active');
+          if (panelId === 'panel-waveform') {
+            initOscilloscope();
+          }
+        }
+      });
+
+      menuItems.forEach(mi => {
+        if (mi.getAttribute('data-target') === panelId) {
+          mi.classList.add('active');
+        } else {
+          mi.classList.remove('active');
+        }
+      });
+    }
+
+    /* --------------------------------------------------
+       7.2 物理阻尼与微交互 Toast 提示
+       -------------------------------------------------- */
+    function toastMsg(type, text) {
+      const container = document.getElementById('toast-notice-container');
+      const toast = document.createElement('div');
+      toast.className = `toast-glass-capsule ${type}`;
+
+      let icon = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`;
+      if (type === 'success') {
+        icon = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>`;
+      }
+
+      toast.innerHTML = `
+        ${icon}
+        <span>${text}</span>
+        <span class="toast-close-btn" onclick="this.parentElement.remove()">✕</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideInCapsule 0.4s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
+        setTimeout(() => toast.remove(), 400);
+      }, 3500);
+    }
+
+    function triggerPillAction(act) {
+      toastMsg('success', `工控操作 [${act}] 执行指令已成功发送至 Modbus 通信核心！`);
+    }
+
+    /* --------------------------------------------------
+       7.3 主题切换支持
+       -------------------------------------------------- */
+    const themeBtn = document.getElementById('btn-theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      const currentTheme = document.body.getAttribute('data-theme');
+      if (currentTheme === 'light') {
+        document.body.removeAttribute('data-theme');
+        toastMsg('success', '已切换至曜黑极光通透暗色模式！');
+      } else {
+        document.body.setAttribute('data-theme', 'light');
+        toastMsg('success', '已切换至温润乳白牛奶亮色模式！');
+      }
+    });
+
+    /* --------------------------------------------------
+       7.4 实时递增时间戳与模拟动态指标
+       -------------------------------------------------- */
+    function startRealtimeClock() {
+      const lblTime = document.getElementById('lbl-live-time');
+      setInterval(() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const sec = String(now.getSeconds()).padStart(2, '0');
+
+        lblTime.textContent = `${year}-${month}-${date} ${hour}:${min}:${sec}`;
+
+        const devTimes = document.querySelectorAll('.td-device-time');
+        devTimes.forEach((td, idx) => {
+          const offsetSec = (now.getSeconds() - idx * 2 + 60) % 60;
+          td.textContent = `${hour}:${min}:${String(offsetSec).padStart(2, '0')}`;
+        });
+      }, 1000);
+    }
+    startRealtimeClock();
+
+    /* --------------------------------------------------
+       7.5 迷你 Canvas 平滑发光渐变趋势折线图
+       -------------------------------------------------- */
+    const sparklineData = {
+      power: Array(30).fill(215.6),
+      soc: Array(30).fill(78.4),
+      comm: Array(30).fill(99.2)
+    };
+
+    function initSparklines() {
+      const powerCanvas = document.getElementById('canvas-trend-power');
+      const socCanvas = document.getElementById('canvas-trend-soc');
+      const commCanvas = document.getElementById('canvas-trend-comm');
+
+      function drawSpark(canvas, data, strokeColor, gradStartColor) {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width = canvas.parentElement.clientWidth;
+        const height = canvas.height = canvas.parentElement.clientHeight;
+
+        ctx.clearRect(0, 0, width, height);
+
+        const max = Math.max(...data) * 1.02;
+        const min = Math.min(...data) * 0.98;
+        const range = max - min || 1;
+
+        // 使用平滑贝塞尔曲线绘制
+        ctx.beginPath();
+        const points = data.map((val, idx) => {
+          return {
+            x: (idx / (data.length - 1)) * width,
+            y: height - ((val - min) / range) * (height - 24) - 12
+          };
+        });
+
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 0; i < points.length - 1; i++) {
+          const xc = (points[i].x + points[i + 1].x) / 2;
+          const yc = (points[i].y + points[i + 1].y) / 2;
+          ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+        }
+        ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+
+        // 绘制折线
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = strokeColor;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+        ctx.shadowBlur = 0; // 重置
+
+        // 渐变发光填充
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, gradStartColor);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+
+      function updateSparkCharts() {
+        // 功率波动
+        const nextPower = Math.max(190, Math.min(240, sparklineData.power[sparklineData.power.length - 1] + (Math.random() - 0.5) * 8));
+        sparklineData.power.push(nextPower);
+        sparklineData.power.shift();
+        document.getElementById('val-trend-power').textContent = nextPower.toFixed(1);
+        drawSpark(powerCanvas, sparklineData.power, '#00f2fe', 'rgba(0, 242, 254, 0.35)');
+
+        // SOC 极微量变化
+        const nextSoc = Math.max(75, Math.min(82, sparklineData.soc[sparklineData.soc.length - 1] + (Math.random() - 0.5) * 0.15));
+        sparklineData.soc.push(nextSoc);
+        sparklineData.soc.shift();
+        document.getElementById('val-trend-soc').textContent = nextSoc.toFixed(1);
+        drawSpark(socCanvas, sparklineData.soc, '#10b981', 'rgba(16, 185, 129, 0.35)');
+
+        // 通信质量微小扰动
+        const nextComm = Math.max(97, Math.min(100, sparklineData.comm[sparklineData.comm.length - 1] + (Math.random() - 0.5) * 0.25));
+        sparklineData.comm.push(nextComm);
+        sparklineData.comm.shift();
+        document.getElementById('val-trend-comm').textContent = nextComm.toFixed(1);
+        drawSpark(commCanvas, sparklineData.comm, '#3b82f6', 'rgba(59, 130, 246, 0.35)');
+      }
+
+      updateSparkCharts();
+      setInterval(updateSparkCharts, 1000);
+    }
+    setTimeout(initSparklines, 500);
+
+    /* --------------------------------------------------
+       7.6 示波器录波仿真引擎 (60fps Canvas)
+       -------------------------------------------------- */
+    let oscCanvas, oscCtx, oscAnimationId;
+    let oscRunning = true;
+    let chEnabled = [true, true, true, true];
+    let timePhase = 0;
+
+    function initOscilloscope() {
+      oscCanvas = document.getElementById('osc-canvas-screen');
+      if (!oscCanvas) return;
+      oscCtx = oscCanvas.getContext('2d');
+
+      const width = oscCanvas.width = oscCanvas.parentElement.clientWidth;
+      const height = oscCanvas.height = oscCanvas.parentElement.clientHeight;
+
+      if (oscAnimationId) cancelAnimationFrame(oscAnimationId);
+
+      function renderOsc() {
+        if (!oscRunning) return;
+        oscCtx.clearRect(0, 0, width, height);
+
+        oscCtx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        oscCtx.lineWidth = 1;
+        const gridGap = 35;
+        for (let x = 0; x < width; x += gridGap) {
+          oscCtx.beginPath();
+          oscCtx.moveTo(x, 0);
+          oscCtx.lineTo(x, height);
+          oscCtx.stroke();
+        }
+        for (let y = 0; y < height; y += gridGap) {
+          oscCtx.beginPath();
+          oscCtx.moveTo(0, y);
+          oscCtx.lineTo(width, y);
+          oscCtx.stroke();
+        }
+        oscCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        oscCtx.lineWidth = 1.5;
+        oscCtx.beginPath();
+        oscCtx.moveTo(width / 2, 0);
+        oscCtx.lineTo(width / 2, height);
+        oscCtx.moveTo(0, height / 2);
+        oscCtx.lineTo(width, height / 2);
+        oscCtx.stroke();
+
+        const timebase = document.getElementById('slider-timebase').value / 5;
+
+        if (chEnabled[0]) {
+          drawWave('#00f2fe', (x) => {
+            return Math.sin(x * 0.02 * timebase + timePhase) * 60 + height / 2 - 20;
+          });
+        }
+        if (chEnabled[1]) {
+          drawWave('#3b82f6', (x) => {
+            const sqVal = Math.sin(x * 0.015 * timebase + timePhase) >= 0 ? 40 : -40;
+            const noise = (Math.random() - 0.5) * 3;
+            return sqVal + noise + height / 2 + 20;
+          });
+        }
+        if (chEnabled[2]) {
+          drawWave('#10b981', (x) => {
+            const period = 300 / timebase;
+            const triVal = (Math.abs((x + timePhase * 100) % period - period / 2) / (period / 2)) * 80 - 40;
+            return triVal + height / 2;
+          });
+        }
+        if (chEnabled[3]) {
+          drawWave('#a855f7', (x) => {
+            return Math.sin(x * 0.008 * timebase + timePhase * 1.5) * 30 + (Math.random() - 0.5) * 6 + height / 2 + 50;
+          });
+        }
+
+        timePhase += 0.04;
+        oscAnimationId = requestAnimationFrame(renderOsc);
+      }
+
+      function drawWave(color, waveFunc) {
+        oscCtx.beginPath();
+        oscCtx.lineWidth = 2.5;
+        oscCtx.strokeStyle = color;
+        oscCtx.shadowColor = color;
+        oscCtx.shadowBlur = 6;
+
+        for (let x = 0; x < width; x++) {
+          const y = waveFunc(x);
+          if (x === 0) oscCtx.moveTo(x, y);
+          else oscCtx.lineTo(x, y);
+        }
+        oscCtx.stroke();
+        oscCtx.shadowBlur = 0;
+      }
+
+      renderOsc();
+    }
+
+    function toggleWaveformRunning() {
+      oscRunning = !oscRunning;
+      const btn = document.getElementById('btn-waveform-run');
+      if (oscRunning) {
+        btn.textContent = '停止录波';
+        btn.style.background = 'linear-gradient(135deg, var(--neon-blue), var(--neon-cyan))';
+        initOscilloscope();
+      } else {
+        btn.textContent = '启动录波';
+        btn.style.background = 'rgba(255, 255, 255, 0.05)';
+        cancelAnimationFrame(oscAnimationId);
+      }
+    }
+
+    function clearWaveformCanvas() {
+      if (oscCtx) {
+        oscCtx.clearRect(0, 0, oscCanvas.width, oscCanvas.height);
+        toastMsg('warning', '录波波形已清空！');
+      }
+    }
+
+    function toggleCh(chIdx) {
+      chEnabled[chIdx - 1] = !chEnabled[chIdx - 1];
+      const capsules = document.querySelectorAll('.ch-item-capsule');
+      capsules[chIdx - 1].classList.toggle('active');
+      toastMsg('success', `CH${chIdx} 通道显示状态已更改！`);
+    }
+
+    /* --------------------------------------------------
+       7.7 Modbus 通信连接与报文打印仿真
+       -------------------------------------------------- */
+    let commConnected = true;
+    let commIntervalId;
+
+    function toggleCommConnect() {
+      const btn = document.getElementById('btn-comm-connect');
+      const term = document.getElementById('comm-console');
+      commConnected = !commConnected;
+
+      if (commConnected) {
+        btn.textContent = '断开连接';
+        btn.style.background = 'linear-gradient(135deg, var(--neon-blue), var(--neon-cyan))';
+        toastMsg('success', 'Modbus TCP 网络握手通信成功重新建立！');
+        startCommLogging();
+      } else {
+        btn.textContent = '建立连接';
+        btn.style.background = 'rgba(255,255,255,0.05)';
+        toastMsg('error', '物理通信已断开！');
+        clearInterval(commIntervalId);
+        const errLine = document.createElement('div');
+        errLine.className = 'terminal-line err';
+        errLine.innerHTML = `<span>[${new Date().toLocaleTimeString()}] [ERR]</span><span>SOCKET TIMEOUT - CONNECTION LOST</span>`;
+        term.appendChild(errLine);
+        term.scrollTop = term.scrollHeight;
+      }
+    }
+
+    function startCommLogging() {
+      const term = document.getElementById('comm-console');
+      clearInterval(commIntervalId);
+
+      commIntervalId = setInterval(() => {
+        if (!commConnected) return;
+
+        const timeStr = new Date().toLocaleTimeString();
+        const txLine = document.createElement('div');
+        txLine.className = 'terminal-line tx';
+        txLine.innerHTML = `<span>[${timeStr}] [TX]</span><span>01 03 00 64 00 04 15 CA</span>`;
+
+        const rxLine = document.createElement('div');
+        rxLine.className = 'terminal-line rx';
+        rxLine.innerHTML = `<span>[${timeStr}] [RX]</span><span>01 03 08 00 E8 02 ${Math.floor(Math.random() * 90 + 200).toString(16).toUpperCase()} 03 E4 03 D8 6D AD</span>`;
+
+        term.appendChild(txLine);
+        setTimeout(() => {
+          term.appendChild(rxLine);
+          term.scrollTop = term.scrollHeight;
+        }, 120);
+
+        if (term.childNodes.length > 50) {
+          term.removeChild(term.firstChild);
+          term.removeChild(term.firstChild);
+        }
+      }, 1500);
+    }
+    startCommLogging();
+
+    /* --------------------------------------------------
+       7.8 参数配置写入控制
+       -------------------------------------------------- */
+    function writeParamsToDev() {
+      const p1 = document.getElementById('param-ac-power').value;
+      const p2 = document.getElementById('param-dc-volt').value;
+      const p3 = document.getElementById('param-cell-temp').value;
+
+      toastMsg('success', 'Modbus 寄存器参数包已编译，已成功向 PLC 写入！');
+      setTimeout(() => {
+        toastMsg('success', `参数已被下位机接纳。当前保护状态: 交流负载=${p1}kW, 直流母线=${p2}V, 警告温度=${p3}℃`);
+      }, 1200);
+    }
+
+    /* --------------------------------------------------
+       7.9 YModem 升级流程仿真
+       -------------------------------------------------- */
+    let upgradeProgress = 0;
+    let upgradeIntervalId;
+
+    function startFirmwareUpgrade() {
+      const btn = document.getElementById('btn-start-upgrade');
+      const fill = document.getElementById('upgrade-prog-fill');
+      const step1 = document.getElementById('step-up-1');
+      const step2 = document.getElementById('step-up-2');
+      const step3 = document.getElementById('step-up-3');
+
+      btn.disabled = true;
+      btn.textContent = '升级中...';
+      fill.style.width = '0%';
+      upgradeProgress = 0;
+
+      step1.className = 'ymodem-step-capsule active';
+      step2.className = 'ymodem-step-capsule';
+      step3.className = 'ymodem-step-capsule';
+
+      setTimeout(() => {
+        step1.className = 'ymodem-step-capsule success';
+        step2.className = 'ymodem-step-capsule active';
+        toastMsg('success', 'YModem 通信握手机制达成，开始向 Flash 写入固件帧包...');
+
+        upgradeIntervalId = setInterval(() => {
+          upgradeProgress += Math.floor(Math.random() * 8 + 4);
+          if (upgradeProgress >= 100) {
+            upgradeProgress = 100;
+            clearInterval(upgradeIntervalId);
+
+            step2.className = 'ymodem-step-capsule success';
+            step3.className = 'ymodem-step-capsule active';
+
+            setTimeout(() => {
+              step3.className = 'ymodem-step-capsule success';
+              btn.disabled = false;
+              btn.textContent = '开始 YModem 升级传输';
+              toastMsg('success', '固件 v2.3.2 扇区编程成功，系统即刻软重载启动中！');
+            }, 1000);
+          }
+          fill.style.width = upgradeProgress + '%';
+        }, 300);
+
+      }, 1500);
+    }
+
+    /* --------------------------------------------------
+       7.10 自动化测试用例运行仿真
+       -------------------------------------------------- */
+    function runAutotestWorkflow() {
+      const btn = document.getElementById('btn-run-autotest');
+      const t1 = document.getElementById('tag-case-1');
+      const t2 = document.getElementById('tag-case-2');
+      const t3 = document.getElementById('tag-case-3');
+
+      btn.disabled = true;
+      btn.textContent = '自动化用例执行中...';
+
+      t1.className = 'autotest-badge-tag success';
+      t2.className = 'autotest-badge-tag running';
+      t2.textContent = '执行中';
+      t3.className = 'autotest-badge-tag success';
+
+      toastMsg('success', '工控自动化测试队列已调度并装载，运行 Case 02...');
+
+      setTimeout(() => {
+        t2.className = 'autotest-badge-tag success';
+        t2.textContent = '测试通过';
+        btn.disabled = false;
+        btn.textContent = '启动整组测试用例';
+        toastMsg('success', '用例队列执行完毕：3/3 测试成功！设备断路器快速安全分闸。');
+      }, 4000);
+    }
+  </script>
+</body>
+
+</html>
