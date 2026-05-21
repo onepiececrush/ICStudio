@@ -1,12 +1,12 @@
 .dashboard {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(142px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+  gap: 10px;
 }
 
 .metric-card,
@@ -21,8 +21,8 @@
 }
 
 .metric-card {
-  min-height: 136px;
-  padding: 16px;
+  min-height: 98px;
+  padding: 12px;
 }
 
 .metric-label {
@@ -38,12 +38,12 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-top: 18px;
+  margin-top: 10px;
 }
 
 .metric-value strong {
   color: var(--text);
-  font-size: 38px;
+  font-size: 28px;
   line-height: 1;
 }
 
@@ -53,7 +53,7 @@
 }
 
 .metric-card p {
-  margin: 14px 0 0;
+  margin: 8px 0 0;
   font-size: 12px;
 }
 
@@ -71,13 +71,13 @@
 
 .dashboard-main {
   display: grid;
-  grid-template-columns: minmax(560px, 1.45fr) minmax(380px, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  gap: 10px;
 }
 
 .panel {
   min-width: 0;
-  padding: 16px;
+  padding: 12px;
 }
 
 .panel-title {
@@ -85,7 +85,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .panel-title h2 {
@@ -101,7 +101,7 @@
 
 .topology-map {
   position: relative;
-  height: 282px;
+  height: clamp(190px, 24vh, 226px);
   border: 1px solid rgba(94, 151, 198, 0.18);
   border-radius: 8px;
   overflow: hidden;
@@ -152,14 +152,15 @@
 }
 
 .trend-chart {
-  min-height: 232px;
+  height: clamp(180px, 22vh, 210px);
+  min-height: 180px;
 }
 
 .trend-chart svg {
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 220px;
+  min-height: 180px;
 }
 
 .grid-line {
@@ -188,12 +189,12 @@
 .trend-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .trend-stats div {
-  padding: 10px;
+  padding: 8px;
   border: 1px solid rgba(120, 178, 225, 0.2);
   border-radius: 8px;
   background: rgba(16, 38, 65, 0.62);
@@ -210,22 +211,22 @@
 }
 
 .trend-stats strong {
-  margin-top: 4px;
-  font-size: 18px;
+  margin-top: 2px;
+  font-size: 16px;
 }
 
 .shortcut-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 10px;
 }
 
 .shortcut {
   display: grid;
   grid-template-columns: 38px 1fr;
   gap: 2px 12px;
-  min-height: 82px;
-  padding: 14px;
+  min-height: 62px;
+  padding: 10px;
   text-align: left;
 }
 
@@ -236,7 +237,7 @@
 
 .shortcut span {
   align-self: end;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
 }
 
@@ -246,13 +247,13 @@
 
 .dashboard-bottom {
   display: grid;
-  grid-template-columns: minmax(540px, 1.4fr) minmax(380px, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  gap: 10px;
 }
 
 th,
 td {
-  padding: 11px 10px;
+  padding: 8px 9px;
   border-bottom: 1px solid rgba(128, 175, 220, 0.14);
   color: #d7e7f7;
   text-align: left;
@@ -272,7 +273,7 @@ th {
 
 .run-badge {
   display: inline-flex;
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: 8px;
   background: rgba(101, 212, 110, 0.14);
   color: var(--green);
@@ -281,16 +282,16 @@ th {
 
 .activity-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .activity-item {
   display: grid;
   grid-template-columns: 12px minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 10px;
   align-items: start;
-  min-height: 54px;
-  padding: 10px;
+  min-height: 42px;
+  padding: 8px;
   border: 1px solid rgba(128, 175, 220, 0.14);
   border-radius: 8px;
 }
@@ -317,4 +318,150 @@ th {
 .activity-item time {
   color: var(--muted);
   font-size: 12px;
+}
+
+.device-panel {
+  overflow-x: auto;
+}
+
+.device-panel table {
+  min-width: 620px;
+}
+
+@media (max-height: 940px) and (min-width: 1201px) {
+  .dashboard {
+    gap: 8px;
+  }
+
+  .metric-grid {
+    gap: 8px;
+  }
+
+  .metric-card {
+    min-height: 86px;
+    padding: 10px;
+  }
+
+  .metric-label {
+    font-size: 12px;
+  }
+
+  .metric-value {
+    margin-top: 6px;
+  }
+
+  .metric-value strong {
+    font-size: 26px;
+  }
+
+  .metric-card p {
+    margin-top: 5px;
+  }
+
+  .dashboard-main,
+  .dashboard-bottom {
+    gap: 8px;
+  }
+
+  .panel {
+    padding: 10px;
+  }
+
+  .panel-title {
+    margin-bottom: 8px;
+  }
+
+  .topology-map {
+    height: 174px;
+  }
+
+  .topology-node {
+    gap: 4px;
+    width: 72px;
+    height: 56px;
+    font-size: 12px;
+  }
+
+  .topology-node svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .node-grid { left: 24px; top: 74px; }
+  .node-meter { left: 128px; top: 74px; }
+  .node-pcs { left: 238px; top: 66px; width: 94px; height: 72px; }
+  .node-pmu { left: 250px; top: 12px; }
+  .node-bms { right: 24px; top: 74px; }
+  .node-battery { right: 120px; top: 74px; }
+
+  .link-a { left: 96px; top: 101px; width: 32px; }
+  .link-b { left: 200px; top: 101px; width: 38px; }
+  .link-c { right: 96px; top: 101px; width: 24px; }
+  .link-d { left: 285px; top: 54px; height: 18px; }
+
+  .trend-chart {
+    height: 150px;
+    min-height: 150px;
+  }
+
+  .trend-chart svg {
+    min-height: 150px;
+  }
+
+  .trend-stats div {
+    padding: 6px 8px;
+  }
+
+  .trend-stats strong {
+    font-size: 15px;
+  }
+
+  .shortcut {
+    min-height: 54px;
+    padding: 8px 10px;
+  }
+
+  th,
+  td {
+    padding: 6px 8px;
+  }
+
+  .activity-list {
+    gap: 5px;
+  }
+
+  .activity-item {
+    min-height: 32px;
+    padding: 6px 8px;
+  }
+
+  .activity-item p {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-main,
+  .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .metric-grid,
+  .shortcut-row {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-item {
+    grid-template-columns: 10px minmax(0, 1fr);
+  }
+
+  .activity-item time {
+    grid-column: 2;
+  }
 }

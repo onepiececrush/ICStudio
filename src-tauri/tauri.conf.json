@@ -15,8 +15,8 @@
         "title": "ICStudio 工控上位机平台",
         "width": 1440,
         "height": 900,
-        "minWidth": 1180,
-        "minHeight": 760
+        "minWidth": 900,
+        "minHeight": 640
       }
     ],
     "security": {
