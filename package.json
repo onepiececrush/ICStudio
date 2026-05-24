@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test:core": "node scripts/run-core-tests.mjs",
+    "test:contract": "node tests/titlebar-contract.test.mjs && node tests/protocol-lab-contract.test.mjs && node tests/point-binding-inspector-contract.test.mjs && node tests/communication-diagnostics-contract.test.mjs && node tests/history-center-workbench-contract.test.mjs && node tests/scada-page-generator-contract.test.mjs && node tests/alarm-rule-engine-contract.test.mjs && node tests/auto-test-workbench-contract.test.mjs && node tests/control-safety-center-contract.test.mjs",
+    "test": "npm run test:core && npm run test:contract"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -17,6 +20,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tauri-apps/cli": "^2",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

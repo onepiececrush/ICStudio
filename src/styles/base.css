@@ -1,6 +1,6 @@
 :root {
-  color: #eef6ff;
-  background: #06101d;
+  color: #eef8ff;
+  background: #071528;
   font-family:
     Inter, "Microsoft YaHei", "Segoe UI", system-ui, -apple-system,
     BlinkMacSystemFont, sans-serif;
@@ -9,19 +9,25 @@
   line-height: 1.4;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --bg: #06101d;
-  --surface: rgba(9, 24, 43, 0.9);
-  --surface-soft: rgba(15, 38, 67, 0.78);
-  --line: rgba(140, 187, 235, 0.22);
-  --line-strong: rgba(103, 183, 255, 0.46);
-  --text: #f5fbff;
-  --muted: #98abc0;
+
+  --bg: #071528;
+  --glass: rgba(11, 31, 64, 0.58);
+  --glass-strong: rgba(12, 40, 82, 0.68);
+  --glass-soft: rgba(255, 255, 255, 0.045);
+  --line: rgba(138, 209, 255, 0.17);
+  --line-strong: rgba(109, 218, 255, 0.42);
+  --inner-light: rgba(255, 255, 255, 0.14);
+  --text: #f2fbff;
+  --muted: rgba(191, 215, 237, 0.66);
+  --muted-strong: rgba(215, 232, 246, 0.82);
   --blue: #38bdf8;
   --cyan: #22d3ee;
-  --green: #65d46e;
+  --green: #6ef3a5;
   --red: #ff6171;
-  --amber: #f59e0b;
-  --purple: #9f7aea;
+  --orange: #fb923c;
+  --amber: #facc15;
+  --purple: #a78bfa;
+  --shadow: rgba(0, 0, 0, 0.34);
 }
 
 * {
@@ -39,14 +45,41 @@ body {
   margin: 0;
   overflow: hidden;
   background:
-    linear-gradient(120deg, rgba(6, 16, 29, 0.97), rgba(7, 29, 48, 0.96)),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.025) 0,
-      rgba(255, 255, 255, 0.025) 1px,
-      transparent 1px,
-      transparent 84px
-    );
+    radial-gradient(circle at 86% 28%, rgba(34, 211, 238, 0.34) 0, rgba(34, 211, 238, 0.16) 18%, transparent 44%),
+    radial-gradient(circle at 78% 62%, rgba(56, 189, 248, 0.18) 0, transparent 42%),
+    radial-gradient(ellipse at 44% 100%, rgba(89, 77, 255, 0.28) 0, rgba(147, 51, 234, 0.16) 26%, transparent 58%),
+    linear-gradient(135deg, #071426 0%, #0a1b3f 34%, #16205d 64%, #0a2f55 100%);
+}
+
+body::before,
+body::after {
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+}
+
+body::before {
+  inset: 0;
+  opacity: 0.2;
+  background:
+    linear-gradient(rgba(117, 208, 255, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(117, 208, 255, 0.11) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(120deg, transparent 0%, #000 18%, #000 76%, transparent 100%);
+}
+
+body::after {
+  left: 16%;
+  right: -12%;
+  bottom: -19%;
+  height: 38%;
+  opacity: 0.92;
+  background:
+    radial-gradient(ellipse at 32% 52%, rgba(34, 211, 238, 0.16), transparent 42%),
+    linear-gradient(90deg, transparent, rgba(76, 112, 255, 0.34), rgba(168, 85, 247, 0.24), transparent);
+  filter: blur(28px);
+  transform: rotate(-2deg);
 }
 
 button,
@@ -66,12 +99,62 @@ table {
   border-collapse: collapse;
 }
 
+.glass-card,
+.glass-panel,
+.module-panel,
+.module-grid article {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(148, 220, 255, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.035) 42%, rgba(8, 32, 72, 0.38)),
+    rgba(8, 29, 66, 0.54);
+  box-shadow:
+    inset 0 1px 0 var(--inner-light),
+    0 18px 54px var(--shadow),
+    0 0 36px rgba(34, 211, 238, 0.08);
+  backdrop-filter: blur(22px) saturate(132%);
+  -webkit-backdrop-filter: blur(22px) saturate(132%);
+}
+
+.glass-card::before,
+.glass-panel::before,
+.module-panel::before,
+.module-grid article::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.18), transparent 28%, transparent 72%, rgba(34, 211, 238, 0.08)),
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.12), transparent 32%);
+  opacity: 0.75;
+}
+
+.tone-blue { --tone: var(--blue); --tone-rgb: 56, 189, 248; }
+.tone-cyan { --tone: var(--cyan); --tone-rgb: 34, 211, 238; }
+.tone-green { --tone: var(--green); --tone-rgb: 110, 243, 165; }
+.tone-red { --tone: var(--red); --tone-rgb: 255, 97, 113; }
+.tone-orange { --tone: var(--orange); --tone-rgb: 251, 146, 60; }
+.tone-purple { --tone: var(--purple); --tone-rgb: 167, 139, 250; }
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 191, 235, 0.32);
-  border-radius: 8px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(122, 202, 255, 0.3);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(122, 222, 255, 0.52);
+  background-clip: content-box;
 }

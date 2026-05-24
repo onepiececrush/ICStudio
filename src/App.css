@@ -2,3 +2,6 @@
 @import "./styles/shell.css";
 @import "./styles/dashboard.css";
 @import "./styles/modules.css";
+@import "./styles/scada.css";
+
+@import "./styles/point-inspector.css";

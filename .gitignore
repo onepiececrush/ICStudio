@@ -24,3 +24,4 @@ output
 *.njsproj
 *.sln
 *.sw?
+.tmp-tests/

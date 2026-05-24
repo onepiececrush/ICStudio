@@ -44,6 +44,50 @@ export type TrendPoint = {
   quality: number;
 };
 
+
+export type HomeDashboardValue = {
+  address: string;
+  name: string;
+  expectedValue: string;
+  engineeringValue: number;
+  displayValue: string;
+  unit: string;
+};
+
+export type HomeVerificationRow = {
+  component: string;
+  boundAddress: string;
+  pointName: string;
+  expectedValue: string;
+  parsedValue: string;
+  displayValue: string;
+  unit: string;
+  error: string;
+  result: string;
+};
+
+export type HomePcsModule = {
+  id: number;
+  state: string;
+  power: string;
+  maxTemp: string;
+  base: number;
+  hasFault: boolean;
+};
+
+export type HomeLoopbackDashboard = {
+  selfTestMode: boolean;
+  endpoint: string;
+  connectionStatus: string;
+  values: HomeDashboardValue[];
+  pcsModules: HomePcsModule[];
+  verificationRows: HomeVerificationRow[];
+  severeAlarmCount: number;
+  generalAlarmCount: number;
+  communicationAlarmCount: number;
+  logs: string[];
+};
+
 export type AppSnapshot = {
   project: ProjectInfo;
   connection: ConnectionInfo;
@@ -51,6 +95,7 @@ export type AppSnapshot = {
   devices: DeviceStatus[];
   activities: ActivityItem[];
   trends: TrendPoint[];
+  loopbackDashboard?: HomeLoopbackDashboard | null;
 };
 
 export type ModuleKey =
@@ -60,11 +105,13 @@ export type ModuleKey =
   | "devices"
   | "monitor"
   | "parameters"
+  | "control"
+  | "events"
   | "waveform"
-  | "alarms"
+  | "history"
   | "autotest"
   | "simulator"
+  | "scada"
   | "data"
-  | "reports"
   | "upgrade"
   | "settings";

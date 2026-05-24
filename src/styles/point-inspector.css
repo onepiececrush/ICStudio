@@ -1,0 +1,297 @@
+.point-inspector-drawer {
+  position: fixed;
+  z-index: 40;
+  top: var(--titlebar-height, 52px);
+  right: 0;
+  bottom: 42px;
+  width: min(430px, calc(100vw - 72px));
+  border-left: 1px solid rgba(132, 196, 255, 0.28);
+  background:
+    radial-gradient(circle at 0 0, rgba(34, 211, 238, 0.18), transparent 36%),
+    linear-gradient(180deg, rgba(10, 28, 58, 0.94), rgba(5, 16, 32, 0.96));
+  box-shadow:
+    -24px 0 70px rgba(0, 0, 0, 0.36),
+    inset 1px 0 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(1.28);
+  -webkit-backdrop-filter: blur(24px) saturate(1.28);
+  transform: translateX(calc(100% + 24px));
+  transition: transform 0.22s ease;
+  pointer-events: none;
+}
+
+.point-inspector-drawer.open {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.point-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 68px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(132, 196, 255, 0.18);
+}
+
+.point-inspector-header h2 {
+  margin: 2px 0 0;
+  font-size: 20px;
+}
+
+.point-inspector-close {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(132, 196, 255, 0.24);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.point-inspector-close:hover {
+  border-color: rgba(255, 97, 113, 0.45);
+  background: rgba(255, 97, 113, 0.16);
+}
+
+.point-inspector-content {
+  display: grid;
+  gap: 12px;
+  height: calc(100% - 68px);
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.point-inspector-empty {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  color: var(--muted);
+}
+
+.point-inspector-empty svg {
+  color: var(--cyan);
+}
+
+.point-inspector-empty strong {
+  color: var(--text);
+}
+
+.point-summary-card,
+.point-section {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(132, 196, 255, 0.18);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(5, 22, 49, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.point-summary-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+}
+
+.point-summary-card span,
+.point-summary-card p,
+.point-kv-grid dt,
+.frame-block span,
+.change-list span,
+.change-list small,
+.simulator-compare span,
+.simulator-compare small,
+.unbound-target {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.point-summary-card h3 {
+  margin: 4px 0 3px;
+  font-size: 18px;
+}
+
+.point-summary-card p {
+  margin: 0;
+}
+
+.comm-badge {
+  align-self: flex-start;
+  padding: 5px 9px;
+  border: 1px solid rgba(250, 204, 21, 0.32);
+  border-radius: 999px;
+  color: var(--amber);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.comm-badge.ok {
+  border-color: rgba(110, 243, 165, 0.34);
+  color: var(--green);
+}
+
+.point-section {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+}
+
+.point-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cyan);
+}
+
+.point-section-title h3 {
+  margin: 0;
+  color: rgba(243, 250, 255, 0.95);
+  font-size: 14px;
+}
+
+.point-kv-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  margin: 0;
+}
+
+.point-kv-grid div {
+  display: grid;
+  grid-template-columns: minmax(106px, 0.42fr) minmax(0, 1fr);
+  gap: 9px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.point-kv-grid dt,
+.point-kv-grid dd {
+  margin: 0;
+}
+
+.point-kv-grid dd {
+  overflow-wrap: anywhere;
+  color: rgba(248, 253, 255, 0.94);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 12px;
+  text-align: right;
+}
+
+.frame-block {
+  display: grid;
+  gap: 6px;
+}
+
+.frame-block code {
+  display: block;
+  overflow-x: auto;
+  padding: 9px;
+  border: 1px solid rgba(132, 196, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.26);
+  color: #b9f8ff;
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.change-list,
+.diagnostics-list {
+  display: grid;
+  gap: 8px;
+}
+
+.change-list article,
+.diagnostic-item,
+.simulator-compare {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid rgba(132, 196, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.change-list time {
+  color: rgba(142, 238, 255, 0.72);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 12px;
+}
+
+.change-list strong,
+.simulator-compare strong {
+  color: var(--text);
+}
+
+.simulator-compare.match {
+  border-color: rgba(110, 243, 165, 0.24);
+  background: rgba(110, 243, 165, 0.06);
+}
+
+.diagnostic-item {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+}
+
+.diagnostic-item strong {
+  color: var(--text);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 12px;
+}
+
+.diagnostic-item p {
+  margin: 2px 0 0;
+  color: rgba(218, 235, 248, 0.78);
+  font-size: 12px;
+}
+
+.diagnostic-item.severity-info svg { color: var(--green); }
+.diagnostic-item.severity-warning svg { color: var(--amber); }
+.diagnostic-item.severity-error svg { color: var(--red); }
+
+.trace-clickable,
+.trace-clickable-card {
+  cursor: pointer;
+}
+
+.trace-clickable {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: inherit;
+}
+
+.trace-clickable strong,
+.trace-clickable b,
+.trace-clickable-card strong,
+.trace-clickable-card b {
+  text-decoration: underline;
+  text-decoration-color: rgba(34, 211, 238, 0.48);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.trace-clickable:hover strong,
+.trace-clickable:hover b,
+.trace-clickable-card:hover strong,
+.trace-clickable-card:hover b {
+  color: #dffcff;
+  text-decoration-color: var(--cyan);
+}
+
+.trace-clickable:focus-visible,
+.trace-clickable-card:focus-visible {
+  outline: 2px solid rgba(34, 211, 238, 0.72);
+  outline-offset: 2px;
+}
+
+@media (max-width: 980px) {
+  .point-inspector-drawer {
+    top: var(--titlebar-height, 52px);
+    bottom: 0;
+    width: min(390px, calc(100vw - 24px));
+  }
+}
