@@ -440,7 +440,7 @@ test("simulator engine only reads Device Profile, blocks invalid profiles, and a
   assert.match(status.reason ?? "", /校验错误/);
 });
 
-test("simulator register editor uses lower-machine raw values and scale conversion", () => {
+test("simulator register editor uses engineering values and derives lower-machine raw values", () => {
   const voltageRegister: DeviceRegister = {
     id: "voltage",
     address: 40003,
@@ -459,9 +459,9 @@ test("simulator register editor uses lower-machine raw values and scale conversi
     currentValue: 748.2,
   };
 
-  assert.equal(formatSimulatorRegisterEditorValue(voltageRegister), "7482");
+  assert.equal(formatSimulatorRegisterEditorValue(voltageRegister), "748.2");
 
-  const parsed = parseSimulatorRegisterInput(voltageRegister, "7490");
+  const parsed = parseSimulatorRegisterInput(voltageRegister, "749");
   assert.equal(parsed.ok, true);
   if (parsed.ok) {
     assert.equal(parsed.rawValue, 7490);

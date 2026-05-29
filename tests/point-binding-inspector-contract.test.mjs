@@ -71,7 +71,7 @@ for (const [fn, pointId] of [
   ["createBmsMetrics", "home.topology.battery-soc"],
   ["createEnergyStats", "home.energy.today-charge"],
 ]) {
-  const match = dashboard.match(new RegExp(`function ${fn}\\([\\s\\S]*?\\n}\\n`));
+  const match = dashboard.match(new RegExp(`function ${fn}\\([\\s\\S]*?\\r?\\n}\\r?\\n`));
   assert.ok(match, `Dashboard should define ${fn}`);
   assert.match(match[0], new RegExp(pointId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${fn} should preserve ${pointId} in self-test/loopback mode`);
 }

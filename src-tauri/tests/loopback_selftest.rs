@@ -21,13 +21,23 @@ fn built_in_slave_serves_register_14001_over_real_modbus_tcp() {
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     let store = create_loopback_store_for_test();
-    let server =
-        start_modbus_tcp_slave_for_test("127.0.0.1", 1502, 1, store).expect("server starts");
+    let server = start_modbus_tcp_slave_for_test("127.0.0.1", 1502, 1, store.clone())
+        .expect("server starts");
 
     let raw = connect_and_read_registers_for_test("127.0.0.1", 1502, 1, 14001, 1)
         .expect("modbus read succeeds");
 
     assert_eq!(raw, vec![12]);
+    let logs = store.logs();
+    assert!(
+        logs.iter().any(|entry| entry.contains("主站连接建立")),
+        "logs: {logs:?}"
+    );
+    assert!(
+        logs.iter()
+            .any(|entry| entry.contains("FC03 读寄存器 address=14001 quantity=1")),
+        "logs: {logs:?}"
+    );
     server.stop();
 }
 

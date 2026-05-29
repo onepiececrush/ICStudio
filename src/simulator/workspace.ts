@@ -42,6 +42,7 @@ export type SimulatorWorkspaceState = {
   busy: boolean;
   serverStatus: SimulatorServerStatus;
   frameLogs: FrameLog[];
+  backendLogs: string[];
   exceptionStats: SimulatorExceptionStats;
   pinnedRegisterIds: string[];
   recentRegisterIds: string[];
@@ -76,6 +77,7 @@ export function createDefaultSimulatorWorkspaceState(): SimulatorWorkspaceState 
       logs: [],
     },
     frameLogs: [],
+    backendLogs: [],
     exceptionStats: { ...defaultSimulatorExceptionStats },
     pinnedRegisterIds: [],
     recentRegisterIds: [],

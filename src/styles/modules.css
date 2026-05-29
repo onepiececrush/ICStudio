@@ -891,8 +891,21 @@
 
 .runtime-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(240px, 0.55fr);
   gap: 14px;
+}
+
+.runtime-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.icon-text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .frame-log-list {
@@ -924,6 +937,34 @@
   white-space: nowrap;
 }
 
+.backend-log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.backend-log-line {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 9px;
+  border: 1px solid rgba(132, 196, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.backend-log-line span {
+  color: var(--muted);
+}
+
+.backend-log-line code {
+  min-width: 0;
+  color: var(--green);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  white-space: normal;
+  word-break: break-word;
+}
+
 @media (max-width: 1280px) {
   .protocol-hero,
   .protocol-layout,
@@ -950,6 +991,10 @@
   }
 
   .frame-log {
+    grid-template-columns: 1fr;
+  }
+
+  .backend-log-line {
     grid-template-columns: 1fr;
   }
 }

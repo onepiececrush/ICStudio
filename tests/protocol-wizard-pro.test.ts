@@ -789,9 +789,15 @@ test("wizard pro imports the complete real EVE workbook sheet without losing cel
     createPointFieldMapping(table.headers),
   );
   const validation = validatePointModels(artifacts.pointModels);
+  const highPressureAlarm = artifacts.pointModels.find((point) => point.address === 13104);
+  const highTemperatureAlarm = artifacts.pointModels.find((point) => point.address === 13106);
 
   assert.equal(artifacts.pointModels[0].address, 13001);
   assert.equal(artifacts.pointModels[0].name, "水泵转速");
+  assert.equal(highPressureAlarm?.scale, 0.1);
+  assert.equal(highPressureAlarm?.unit, "bar");
+  assert.equal(highTemperatureAlarm?.scale, 0.1);
+  assert.equal(highTemperatureAlarm?.unit, "℃");
   assert.ok(artifacts.pointModels.length > 1000, "complete workbook import should generate the simulator-scale register list");
   assert.equal(validation.canImport, true);
 });

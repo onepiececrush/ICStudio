@@ -100,6 +100,7 @@ function App() {
           ...current,
           running: status.running,
           serverStatus: status,
+          backendLogs: status.logs,
           frameLogs: status.logs.map((log) => createBackendFrameLog(log)),
         }));
       })
@@ -123,6 +124,14 @@ function App() {
     }, HOME_DEVICE_POLL_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [Boolean(loopbackDashboard)]);
+
+  useEffect(() => {
+    if (!simulatorWorkspace.running) return;
+    const timer = window.setInterval(() => {
+      void refreshSimulatorStatus({ silent: true });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [simulatorWorkspace.running]);
 
   useEffect(() => {
     setAlarmState((current) => evaluateAlarmSnapshot(current, createAlarmInputs(loopbackDashboard)));
@@ -294,6 +303,24 @@ function App() {
     });
   }
 
+  async function refreshSimulatorStatus(options: { silent?: boolean } = {}) {
+    try {
+      const status = await invoke<SimulatorServerStatus>("get_modbus_simulator_status");
+      setSimulatorWorkspace((current) => ({
+        ...current,
+        running: status.running,
+        serverStatus: status,
+        backendLogs: status.logs,
+      }));
+    } catch (error) {
+      if (options.silent) return;
+      setSimulatorWorkspace((current) => ({
+        ...current,
+        notice: { tone: "error", text: `刷新从机模拟日志失败：${String(error || "未知错误")}` },
+      }));
+    }
+  }
+
   async function handleSimulatorRegisterCommit(
     registerId: string,
     value: string,
@@ -321,10 +348,15 @@ function App() {
           }));
           return false;
         }
-        await invoke("set_modbus_simulator_register_value", {
+        const status = await invoke<SimulatorServerStatus>("set_modbus_simulator_register_value", {
           address: register.address,
           value: parsed.numericValue,
         });
+        setSimulatorWorkspace((current) => ({
+          ...current,
+          serverStatus: status,
+          backendLogs: status.logs,
+        }));
       }
 
       const timestamp = formatSimulatorTime(new Date());
@@ -418,6 +450,7 @@ function App() {
         running: status.running,
         busy: false,
         serverStatus: status,
+        backendLogs: status.logs,
         frameLogs: [nextFrameLog, ...status.logs.map((log) => createBackendFrameLog(log))].slice(0, 120),
         notice: { tone: "success", text: `模拟已启动：${profile.name} @ tcp://${status.endpoint} unit=${status.unitId}` },
       }));
@@ -450,6 +483,7 @@ function App() {
         running: false,
         busy: false,
         serverStatus: status,
+        backendLogs: status.logs,
         frameLogs: [nextFrameLog, ...current.frameLogs].slice(0, 120),
         notice: { tone: "success", text: "从机模拟已停止" },
       }));
@@ -488,6 +522,7 @@ function App() {
             value: numericValue,
           });
         }
+        await refreshSimulatorStatus({ silent: true });
       }
 
       const timestamp = formatSimulatorTime(new Date());
@@ -578,6 +613,7 @@ function App() {
           onSimulatorStop={handleSimulatorStop}
           onSimulatorApplyScenario={handleSimulatorApplyScenario}
           onSimulatorNoticeClear={handleSimulatorNoticeClear}
+          onSimulatorRefreshLogs={() => refreshSimulatorStatus()}
         />
       )}
     </AppShell>

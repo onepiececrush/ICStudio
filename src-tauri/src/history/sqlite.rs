@@ -1,59 +1,17 @@
 use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_int};
 use std::ptr;
+
+use libsqlite3_sys::{
+    sqlite3, sqlite3_bind_double, sqlite3_bind_int64, sqlite3_bind_null, sqlite3_bind_text,
+    sqlite3_clear_bindings, sqlite3_close, sqlite3_column_double, sqlite3_column_int64,
+    sqlite3_column_text, sqlite3_errmsg, sqlite3_exec, sqlite3_finalize, sqlite3_open,
+    sqlite3_prepare_v2, sqlite3_reset, sqlite3_step, sqlite3_stmt, SQLITE_DONE, SQLITE_OK,
+    SQLITE_ROW,
+};
 
 /// SQLite 轻量 FFI 包装：把所有 unsafe 调用限制在本模块内。
 /// 调用方只能拿到 Result 风格的连接和语句 API，不能直接触碰裸指针。
-#[allow(non_camel_case_types)]
-enum sqlite3 {}
-
-#[allow(non_camel_case_types)]
-enum sqlite3_stmt {}
-
-#[link(name = "sqlite3")]
-unsafe extern "C" {
-    fn sqlite3_open(filename: *const c_char, pp_db: *mut *mut sqlite3) -> c_int;
-    fn sqlite3_close(db: *mut sqlite3) -> c_int;
-    fn sqlite3_errmsg(db: *mut sqlite3) -> *const c_char;
-    fn sqlite3_exec(
-        db: *mut sqlite3,
-        sql: *const c_char,
-        callback: Option<
-            unsafe extern "C" fn(*mut c_void, c_int, *mut *mut c_char, *mut *mut c_char) -> c_int,
-        >,
-        arg: *mut c_void,
-        errmsg: *mut *mut c_char,
-    ) -> c_int;
-    fn sqlite3_prepare_v2(
-        db: *mut sqlite3,
-        sql: *const c_char,
-        n_byte: c_int,
-        stmt: *mut *mut sqlite3_stmt,
-        tail: *mut *const c_char,
-    ) -> c_int;
-    fn sqlite3_finalize(stmt: *mut sqlite3_stmt) -> c_int;
-    fn sqlite3_reset(stmt: *mut sqlite3_stmt) -> c_int;
-    fn sqlite3_clear_bindings(stmt: *mut sqlite3_stmt) -> c_int;
-    fn sqlite3_step(stmt: *mut sqlite3_stmt) -> c_int;
-    fn sqlite3_bind_int64(stmt: *mut sqlite3_stmt, index: c_int, value: i64) -> c_int;
-    fn sqlite3_bind_double(stmt: *mut sqlite3_stmt, index: c_int, value: f64) -> c_int;
-    fn sqlite3_bind_text(
-        stmt: *mut sqlite3_stmt,
-        index: c_int,
-        value: *const c_char,
-        n: c_int,
-        destructor: Option<unsafe extern "C" fn(*mut c_void)>,
-    ) -> c_int;
-    fn sqlite3_bind_null(stmt: *mut sqlite3_stmt, index: c_int) -> c_int;
-    fn sqlite3_column_int64(stmt: *mut sqlite3_stmt, column: c_int) -> i64;
-    fn sqlite3_column_double(stmt: *mut sqlite3_stmt, column: c_int) -> f64;
-    fn sqlite3_column_text(stmt: *mut sqlite3_stmt, column: c_int) -> *const u8;
-}
-
-const SQLITE_OK: c_int = 0;
-const SQLITE_ROW: c_int = 100;
-const SQLITE_DONE: c_int = 101;
-
 pub(super) struct SqliteConnection {
     db: *mut sqlite3,
 }

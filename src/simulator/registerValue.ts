@@ -13,10 +13,9 @@ export type ParsedSimulatorRegisterInput =
     };
 
 export function formatSimulatorRegisterEditorValue(register: DeviceRegister) {
-  if (!usesRawScaledRegisterValue(register)) return String(register.currentValue);
   const currentValue = toSimulatorNumericValue(register.currentValue);
   if (currentValue === null) return String(register.currentValue);
-  return formatCompactNumber(currentValue / normalizedScale(register.scale));
+  return formatCompactNumber(currentValue);
 }
 
 export function parseSimulatorRegisterInput(register: DeviceRegister, value: string): ParsedSimulatorRegisterInput {
@@ -39,8 +38,9 @@ export function parseSimulatorRegisterInput(register: DeviceRegister, value: str
     return { ok: true, currentValue: numericInput, numericValue: numericInput, rawValue: null };
   }
 
-  const numericValue = roundByScalePrecision(numericInput * normalizedScale(register.scale), register.scale);
-  return { ok: true, currentValue: numericValue, numericValue, rawValue: numericInput };
+  const numericValue = roundByScalePrecision(numericInput, register.scale);
+  const rawValue = Math.round(numericValue / normalizedScale(register.scale));
+  return { ok: true, currentValue: numericValue, numericValue, rawValue };
 }
 
 export function toSimulatorNumericValue(value: DeviceRegister["currentValue"]) {

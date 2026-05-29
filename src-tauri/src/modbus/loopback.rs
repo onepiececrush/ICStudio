@@ -216,7 +216,10 @@ impl SimulatedRegisterStore {
         for point in registers.values() {
             if address >= point.address && address < point.address + point.length {
                 let words = encode_engineering_value_to_raw(point);
-                return words[(address - point.address) as usize];
+                return words
+                    .get((address - point.address) as usize)
+                    .copied()
+                    .unwrap_or_default();
             }
         }
         0
@@ -256,7 +259,10 @@ impl SimulatedRegisterStore {
             raw,
             label: next_label.clone(),
         };
-        self.log(format!("修改模拟枚举 {address} {}={next_label}", point.name));
+        self.log(format!(
+            "修改模拟枚举 {address} {}={next_label}",
+            point.name
+        ));
         Ok(())
     }
 
@@ -299,10 +305,7 @@ impl SimulatedRegisterStore {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
             .unwrap_or_default();
-        let mut logs = self
-            .logs
-            .lock()
-            .expect("log store poisoned");
+        let mut logs = self.logs.lock().expect("log store poisoned");
         logs.push(format!("{ts}: {message}"));
         let overflow = logs.len().saturating_sub(120);
         if overflow > 0 {
@@ -310,7 +313,7 @@ impl SimulatedRegisterStore {
         }
     }
 
-    pub(crate) fn logs(&self) -> Vec<String> {
+    pub fn logs(&self) -> Vec<String> {
         self.logs.lock().expect("log store poisoned").clone()
     }
 
@@ -378,32 +381,30 @@ fn engineering_number_value(point: &RegisterPoint) -> Option<f64> {
 fn encode_engineering_value_to_raw(point: &RegisterPoint) -> Vec<u16> {
     match point.value {
         RegisterValue::Enum { raw, .. } => vec![raw],
-        RegisterValue::Number(value) => {
-            match point.data_type {
-                DataType::UInt16 => {
-                    let scaled = (value / point.scale).round();
-                    vec![scaled.clamp(0.0, u16::MAX as f64) as u16]
-                }
-                DataType::Int16 => {
-                    let scaled = (value / point.scale).round();
-                    vec![(scaled.clamp(i16::MIN as f64, i16::MAX as f64) as i16) as u16]
-                }
-                DataType::UInt32 => {
-                    let scaled = (value / point.scale).round();
-                    let raw = scaled.clamp(0.0, u32::MAX as f64) as u32;
-                    vec![(raw >> 16) as u16, (raw & 0xffff) as u16]
-                }
-                DataType::Int32 => {
-                    let scaled = (value / point.scale).round();
-                    let raw = scaled.clamp(i32::MIN as f64, i32::MAX as f64) as i32 as u32;
-                    vec![(raw >> 16) as u16, (raw & 0xffff) as u16]
-                }
-                DataType::Float32 => {
-                    let raw = ((value / point.scale) as f32).to_bits();
-                    vec![(raw >> 16) as u16, (raw & 0xffff) as u16]
-                }
+        RegisterValue::Number(value) => match point.data_type {
+            DataType::UInt16 => {
+                let scaled = (value / point.scale).round();
+                vec![scaled.clamp(0.0, u16::MAX as f64) as u16]
             }
-        }
+            DataType::Int16 => {
+                let scaled = (value / point.scale).round();
+                vec![(scaled.clamp(i16::MIN as f64, i16::MAX as f64) as i16) as u16]
+            }
+            DataType::UInt32 => {
+                let scaled = (value / point.scale).round();
+                let raw = scaled.clamp(0.0, u32::MAX as f64) as u32;
+                vec![(raw >> 16) as u16, (raw & 0xffff) as u16]
+            }
+            DataType::Int32 => {
+                let scaled = (value / point.scale).round();
+                let raw = scaled.clamp(i32::MIN as f64, i32::MAX as f64) as i32 as u32;
+                vec![(raw >> 16) as u16, (raw & 0xffff) as u16]
+            }
+            DataType::Float32 => {
+                let raw = ((value / point.scale) as f32).to_bits();
+                vec![(raw >> 16) as u16, (raw & 0xffff) as u16]
+            }
+        },
     }
 }
 
@@ -415,8 +416,19 @@ fn decode_raw_words_to_value(point: &RegisterPoint, raw_registers: &[u16]) -> Re
         },
         RegisterValue::Number(_) => {
             let value = match point.data_type {
-                DataType::Int16 => i16::from_be_bytes(raw_registers.first().copied().unwrap_or_default().to_be_bytes()) as f64 * point.scale,
-                DataType::UInt16 => raw_registers.first().copied().unwrap_or_default() as f64 * point.scale,
+                DataType::Int16 => {
+                    i16::from_be_bytes(
+                        raw_registers
+                            .first()
+                            .copied()
+                            .unwrap_or_default()
+                            .to_be_bytes(),
+                    ) as f64
+                        * point.scale
+                }
+                DataType::UInt16 => {
+                    raw_registers.first().copied().unwrap_or_default() as f64 * point.scale
+                }
                 DataType::UInt32 => {
                     let high = raw_registers.first().copied().unwrap_or_default() as u32;
                     let low = raw_registers.get(1).copied().unwrap_or_default() as u32;
@@ -537,11 +549,18 @@ pub(crate) fn start_modbus_tcp_slave(
     let handle = thread::spawn(move || {
         while !thread_stop.load(Ordering::SeqCst) {
             match listener.accept() {
-                Ok((stream, _)) => {
+                Ok((stream, peer_addr)) => {
+                    store.log(format!("主站连接建立：{peer_addr}"));
                     let request_store = store.clone();
                     let request_stop = Arc::clone(&thread_stop);
                     thread::spawn(move || {
-                        handle_modbus_connection(stream, unit_id, request_store, request_stop)
+                        handle_modbus_connection(
+                            stream,
+                            peer_addr.to_string(),
+                            unit_id,
+                            request_store,
+                            request_stop,
+                        )
                     });
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
@@ -562,6 +581,7 @@ pub(crate) fn start_modbus_tcp_slave(
 
 fn handle_modbus_connection(
     mut stream: TcpStream,
+    peer_addr: String,
     unit_id: u8,
     store: SimulatedRegisterStore,
     stop: Arc<AtomicBool>,
@@ -570,6 +590,7 @@ fn handle_modbus_connection(
     loop {
         if stop.load(Ordering::SeqCst) {
             let _ = stream.shutdown(Shutdown::Both);
+            store.log(format!("主站连接关闭：{peer_addr}，server stopping"));
             return;
         }
         let mut header = [0u8; 7];
@@ -581,20 +602,32 @@ fn handle_modbus_connection(
             {
                 continue
             }
-            Err(_) => return,
+            Err(error) => {
+                store.log(format!(
+                    "主站连接关闭：{peer_addr}，读取 MBAP 失败：{error}"
+                ));
+                return;
+            }
         }
         let transaction_id = u16::from_be_bytes([header[0], header[1]]);
         let protocol_id = u16::from_be_bytes([header[2], header[3]]);
         let length = u16::from_be_bytes([header[4], header[5]]) as usize;
         let request_unit = header[6];
         if protocol_id != 0 || length == 0 {
+            store.log(format!(
+                "丢弃异常 MBAP：peer={peer_addr} protocol={protocol_id} length={length}"
+            ));
             return;
         }
         let mut pdu = vec![0u8; length.saturating_sub(1)];
-        if stream.read_exact(&mut pdu).is_err() {
+        if let Err(error) = stream.read_exact(&mut pdu) {
+            store.log(format!("主站连接关闭：{peer_addr}，读取 PDU 失败：{error}"));
             return;
         }
         if request_unit != unit_id {
+            store.log(format!(
+                "忽略 Unit ID 不匹配请求：peer={peer_addr} request={request_unit} expected={unit_id}"
+            ));
             continue;
         }
         let response_pdu = process_modbus_pdu(&pdu, &store);
@@ -605,7 +638,10 @@ fn handle_modbus_connection(
         response.extend_from_slice(&response_len.to_be_bytes());
         response.push(unit_id);
         response.extend(response_pdu);
-        let _ = stream.write_all(&response);
+        if let Err(error) = stream.write_all(&response) {
+            store.log(format!("主站连接关闭：{peer_addr}，写响应失败：{error}"));
+            return;
+        }
     }
 }
 
@@ -619,8 +655,14 @@ fn process_modbus_pdu(pdu: &[u8], store: &SimulatedRegisterStore) -> Vec<u8> {
         3 | 4 => {
             let quantity = u16::from_be_bytes([pdu[3], pdu[4]]);
             if quantity == 0 || quantity > 125 {
+                store.log(format!(
+                    "FC{function:02} 非法读取数量 address={address} quantity={quantity}"
+                ));
                 return vec![function | 0x80, 0x03];
             }
+            store.log(format!(
+                "FC{function:02} 读寄存器 address={address} quantity={quantity}"
+            ));
             let mut response = vec![function, (quantity * 2) as u8];
             for offset in 0..quantity {
                 response.extend_from_slice(&store.raw(address + offset).to_be_bytes());
@@ -629,6 +671,7 @@ fn process_modbus_pdu(pdu: &[u8], store: &SimulatedRegisterStore) -> Vec<u8> {
         }
         6 => {
             if pdu.len() < 5 {
+                store.log("FC06 请求长度不足".to_string());
                 return vec![function | 0x80, 0x03];
             }
             let raw = u16::from_be_bytes([pdu[3], pdu[4]]);
@@ -637,13 +680,20 @@ fn process_modbus_pdu(pdu: &[u8], store: &SimulatedRegisterStore) -> Vec<u8> {
         }
         16 => {
             if pdu.len() < 6 {
+                store.log("FC16 请求长度不足".to_string());
                 return vec![function | 0x80, 0x03];
             }
             let quantity = u16::from_be_bytes([pdu[3], pdu[4]]);
             let byte_count = pdu[5] as usize;
             if byte_count != quantity as usize * 2 || pdu.len() < 6 + byte_count {
+                store.log(format!(
+                    "FC16 写多个寄存器长度异常 address={address} quantity={quantity} bytes={byte_count}"
+                ));
                 return vec![function | 0x80, 0x03];
             }
+            store.log(format!(
+                "FC16 写多个寄存器 address={address} quantity={quantity}"
+            ));
             for offset in 0..quantity {
                 let index = 6 + offset as usize * 2;
                 let raw = u16::from_be_bytes([pdu[index], pdu[index + 1]]);
@@ -651,7 +701,10 @@ fn process_modbus_pdu(pdu: &[u8], store: &SimulatedRegisterStore) -> Vec<u8> {
             }
             vec![function, pdu[1], pdu[2], pdu[3], pdu[4]]
         }
-        _ => vec![function | 0x80, 0x01],
+        _ => {
+            store.log(format!("不支持的功能码 FC{function:02}"));
+            vec![function | 0x80, 0x01]
+        }
     }
 }
 
@@ -863,4 +916,26 @@ pub fn clear_pcs3_fault_for_test(store: &SimulatedRegisterStore) -> Result<(), S
     store.set_enum(16010, 1, "运行")?;
     store.set_number(16021, 0.0)?;
     store.set_number(14003, 0.0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn uint16_register_definitions_with_multi_word_length_do_not_panic_when_reading_padding_words()
+    {
+        let store = create_store_from_register_definitions(&[SimulatorRegisterDefinition {
+            address: 1000,
+            name: "预留多字寄存器".to_string(),
+            data_type: "uint16".to_string(),
+            length: 2,
+            scale: 1.0,
+            unit: String::new(),
+            current_value: 42.0,
+        }]);
+
+        assert_eq!(store.raw(1000), 42);
+        assert_eq!(store.raw(1001), 0);
+    }
 }

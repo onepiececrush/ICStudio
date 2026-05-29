@@ -138,6 +138,7 @@ export function ModulePanel(props: {
   onSimulatorStop: () => Promise<void>;
   onSimulatorApplyScenario: (scenarioId: string) => Promise<void>;
   onSimulatorNoticeClear: () => void;
+  onSimulatorRefreshLogs: () => Promise<void>;
 }) {
   if (props.moduleKey === "dashboard") {
     return null;
@@ -242,6 +243,7 @@ export function ModulePanel(props: {
         onStop={props.onSimulatorStop}
         onApplyScenario={props.onSimulatorApplyScenario}
         onNoticeClear={props.onSimulatorNoticeClear}
+        onRefreshLogs={props.onSimulatorRefreshLogs}
       />
     );
   }

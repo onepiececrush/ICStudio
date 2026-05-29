@@ -8,6 +8,7 @@ import {
   PinOff,
   PlayCircle,
   RadioTower,
+  RefreshCw,
   X,
 } from "lucide-react";
 import type { DeviceProfile, DeviceRegister } from "../protocol/deviceProfile";
@@ -31,6 +32,7 @@ export function SimulatorWorkbench({
   onStop,
   onApplyScenario,
   onNoticeClear,
+  onRefreshLogs,
 }: {
   workspace: SimulatorWorkspaceState;
   selectedProfile: DeviceProfile | null;
@@ -43,6 +45,7 @@ export function SimulatorWorkbench({
   onStop: () => Promise<void>;
   onApplyScenario: (scenarioId: string) => Promise<void>;
   onNoticeClear: () => void;
+  onRefreshLogs: () => Promise<void>;
 }) {
   const [quickImportBusy, setQuickImportBusy] = useState(false);
   const [quickImportNotice, setQuickImportNotice] = useState("");
@@ -185,7 +188,13 @@ export function SimulatorWorkbench({
             />
           ) : null}
           {selectedProfile ? <ScenarioPanel profile={selectedProfile} onApply={onApplyScenario} /> : null}
-          <RuntimePanels running={workspace.running} frameLogs={workspace.frameLogs} exceptionStats={workspace.exceptionStats} />
+          <RuntimePanels
+            running={workspace.running}
+            frameLogs={workspace.frameLogs}
+            backendLogs={workspace.backendLogs}
+            exceptionStats={workspace.exceptionStats}
+            onRefreshLogs={onRefreshLogs}
+          />
         </main>
       </div>
     </section>
@@ -407,7 +416,7 @@ function RegisterMemoryTable({
 
   return (
     <section className="lab-card glass-panel wide-card">
-      <SectionTitle icon={RadioTower} title="寄存器模拟表" helper="输入原始寄存器值，提交后按倍率换算成工程值并同步到运行态模拟器" />
+      <SectionTitle icon={RadioTower} title="寄存器模拟表" helper="输入工程值，写入时按倍率换算为下位机原始寄存器值并同步到运行态模拟器" />
       <div className="simulator-table-toolbar">
         <label className="preview-filter">
           <span>搜索寄存器</span>
@@ -435,7 +444,7 @@ function RegisterMemoryTable({
         <table className="memory-table">
           <thead>
             <tr>
-              <th>快调</th><th>地址</th><th>名称</th><th>原始值</th><th>单位</th><th>类型</th><th>读写</th><th>最后修改</th><th>范围</th>
+              <th>快调</th><th>地址</th><th>名称</th><th>工程值</th><th>倍率</th><th>单位</th><th>类型</th><th>读写</th><th>最后修改</th><th>范围</th>
             </tr>
           </thead>
           <tbody>
@@ -444,7 +453,7 @@ function RegisterMemoryTable({
               return (
                 <Fragment key={group.name}>
                   <tr className="memory-group-row">
-                    <td colSpan={9}>
+                    <td colSpan={10}>
                       <button className="memory-group-toggle" type="button" onClick={() => toggleGroup(group.name)} aria-expanded={expanded}>
                         <span className="memory-group-caret">{expanded ? "▾" : "▸"}</span>
                         <strong>{group.name}</strong>
@@ -470,6 +479,7 @@ function RegisterMemoryTable({
                             onCommit={(value) => onRegisterCommit(register.id, value)}
                           />
                         </td>
+                        <td>{formatScale(register.scale)}</td>
                         <td>{register.unit || "-"}</td>
                         <td>{register.dataType}</td>
                         <td>{accessLabel(register.access)}</td>
@@ -482,7 +492,7 @@ function RegisterMemoryTable({
               );
             }) : (
               <tr>
-                <td colSpan={9}>
+                <td colSpan={10}>
                   <div className="memory-table-empty">没有匹配寄存器</div>
                 </td>
               </tr>
@@ -529,6 +539,10 @@ function formatRegisterAddressRange(registers: DeviceRegister[]) {
   return `${Math.min(...addresses)} ~ ${Math.max(...addresses)}`;
 }
 
+function formatScale(scale: number) {
+  return Number.isFinite(scale) && scale !== 0 ? String(scale) : "1";
+}
+
 function ScenarioPanel({ profile, onApply }: { profile: DeviceProfile; onApply: (scenarioId: string) => Promise<void> }) {
   return (
     <section className="lab-card glass-panel">
@@ -550,7 +564,19 @@ function ScenarioPanel({ profile, onApply }: { profile: DeviceProfile; onApply: 
   );
 }
 
-function RuntimePanels({ running, frameLogs, exceptionStats }: { running: boolean; frameLogs: FrameLog[]; exceptionStats: SimulatorExceptionStats }) {
+function RuntimePanels({
+  running,
+  frameLogs,
+  backendLogs,
+  exceptionStats,
+  onRefreshLogs,
+}: {
+  running: boolean;
+  frameLogs: FrameLog[];
+  backendLogs: string[];
+  exceptionStats: SimulatorExceptionStats;
+  onRefreshLogs: () => Promise<void>;
+}) {
   return (
     <div className="runtime-grid">
       <section className="lab-card glass-panel">
@@ -573,6 +599,28 @@ function RuntimePanels({ running, frameLogs, exceptionStats }: { running: boolea
         </div>
       </section>
       <section className="lab-card glass-panel">
+        <div className="runtime-panel-head">
+          <SectionTitle icon={RadioTower} title="从机运行日志" helper={running ? "自动刷新中" : "模拟未启动"} />
+          <button className="mini-button icon-text-button" type="button" onClick={() => void onRefreshLogs()}>
+            <RefreshCw size={14} />刷新
+          </button>
+        </div>
+        <div className="backend-log-list">
+          {backendLogs.length ? backendLogs.map((log, index) => (
+            <div className="backend-log-line" key={`${log}-${index}`}>
+              <span>{formatBackendLogTime(log)}</span>
+              <code>{formatBackendLogMessage(log)}</code>
+            </div>
+          )) : (
+            <div className="global-frame-empty">
+              <RadioTower size={24} />
+              <strong>暂无运行日志</strong>
+              <span>启动模拟后，外部主站连接、读写请求和异常断开会显示在这里。</span>
+            </div>
+          )}
+        </div>
+      </section>
+      <section className="lab-card glass-panel">
         <SectionTitle icon={AlertTriangle} title="异常码统计" helper="按故障注入模式累计" />
         <div className="exception-grid">
           {Object.entries(exceptionStats).map(([key, value]) => (
@@ -582,6 +630,22 @@ function RuntimePanels({ running, frameLogs, exceptionStats }: { running: boolea
       </section>
     </div>
   );
+}
+
+function formatBackendLogTime(log: string) {
+  const match = log.match(/^(\d+):\s*(.*)$/);
+  if (!match) return "--";
+  const date = new Date(Number(match[1]) * 1000);
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function formatBackendLogMessage(log: string) {
+  return log.replace(/^\d+:\s*/, "");
 }
 
 function SectionTitle({ icon: Icon, title, helper }: { icon: typeof RadioTower; title: string; helper: string }) {
