@@ -101,6 +101,7 @@ export type AppSnapshot = {
 export type ModuleKey =
   | "dashboard"
   | "communication"
+  | "hostVerification"
   | "protocol"
   | "devices"
   | "monitor"

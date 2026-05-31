@@ -28,6 +28,7 @@ import { AutoTestWorkbench } from "./AutoTestWorkbench";
 import { CommunicationDiagnosticsWorkbench } from "./CommunicationDiagnosticsWorkbench";
 import { ControlSafetyCenterWorkbench } from "./ControlSafetyCenterWorkbench";
 import { HistoryReportCenter } from "./HistoryReportCenter";
+import { HostVerificationWorkbench } from "./HostVerificationWorkbench";
 import { ProtocolLabWorkbench } from "./ProtocolLabWorkbench";
 import { ScadaPageDesigner } from "./ScadaPageDesigner";
 import { SimulatorWorkbench } from "./SimulatorWorkbench";
@@ -43,6 +44,11 @@ const moduleMeta: Record<Exclude<ModuleKey, "dashboard">, ModuleMeta> = {
     title: "通信调试",
     icon: Cable,
     rows: ["连接配置", "报文助手", "报文监控", "通信统计"],
+  },
+  hostVerification: {
+    title: "主机验证",
+    icon: Gauge,
+    rows: ["XLS 协议解析", "全寄存器读取", "可写点写入", "回读校验"],
   },
   protocol: {
     title: "协议管理",
@@ -146,6 +152,17 @@ export function ModulePanel(props: {
 
   if (props.moduleKey === "communication") {
     return <CommunicationDiagnosticsWorkbench snapshot={props.snapshot} />;
+  }
+
+  if (props.moduleKey === "hostVerification") {
+    return (
+      <HostVerificationWorkbench
+        profiles={props.simulatorWorkspace.profiles}
+        selectedProfileId={props.simulatorWorkspace.selectedProfileId}
+        onSelectProfile={props.onSimulatorProfileSelect}
+        onImportProfile={props.onSimulatorProfileImport}
+      />
+    );
   }
 
   if (props.moduleKey === "history") {

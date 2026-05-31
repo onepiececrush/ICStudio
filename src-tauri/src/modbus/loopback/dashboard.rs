@@ -136,13 +136,25 @@ fn build_loopback_dashboard(
             component: component_for_address(address).to_string(),
             bound_address: address.to_string(),
             point_name: point.name.to_string(),
-            expected_value: if self_test_mode { expected } else { "--".to_string() },
+            expected_value: if self_test_mode {
+                expected
+            } else {
+                "--".to_string()
+            },
             parsed_value: decoded.display_value.clone(),
             display_value: decoded.display_value,
             unit: point.unit.to_string(),
-            error: if self_test_mode { format_number(error, 2) } else { "--".to_string() },
+            error: if self_test_mode {
+                format_number(error, 2)
+            } else {
+                "--".to_string()
+            },
             result: if self_test_mode {
-                if passed { "通过" } else { "失败" }
+                if passed {
+                    "通过"
+                } else {
+                    "失败"
+                }
             } else if readable {
                 "已读取"
             } else {

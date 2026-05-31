@@ -17,6 +17,7 @@
         "height": 900,
         "minWidth": 900,
         "minHeight": 640,
+        "backgroundColor": "#071528",
         "decorations": false,
         "resizable": true
       }

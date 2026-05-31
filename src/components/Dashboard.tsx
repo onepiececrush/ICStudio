@@ -392,7 +392,7 @@ function EnergyFlowPanel({ loopback, onInspectPoint }: { loopback: HomeLoopbackD
     <section className="panel glass-panel energy-flow-panel">
       <PanelTitle title="能量流向图" status={loopback ? "当前：已连接实时读取" : "未连接"} variant={loopback ? "success" : "neutral"} />
       <div className="energy-canvas">
-        <svg className="energy-lines" viewBox="0 0 920 420" aria-hidden="true" preserveAspectRatio="none">
+        <svg className="energy-lines" viewBox="0 0 920 500" aria-hidden="true" preserveAspectRatio="none">
           <defs>
             <linearGradient id="acFlow" x1="1" x2="0" y1="0" y2="0">
               <stop offset="0" stopColor="rgba(110, 243, 165, 0)" />
@@ -415,12 +415,12 @@ function EnergyFlowPanel({ loopback, onInspectPoint }: { loopback: HomeLoopbackD
               </feMerge>
             </filter>
           </defs>
-          <path className="energy-line ac-line" d="M462 184 C370 184 306 184 222 184" markerEnd="url(#flowArrow)" />
-          <path className="energy-line dc-line" d="M704 184 C630 184 570 184 492 184" markerEnd="url(#flowArrow)" />
-          <path className="energy-line aux-line" d="M458 258 C458 310 350 318 260 328" />
-          <path className="energy-line aux-line" d="M478 258 C492 320 612 322 720 328" />
-          <path className="energy-line aux-line soft" d="M220 236 C180 284 174 318 158 348" />
-          <path className="energy-line aux-line soft" d="M708 236 C742 284 766 318 796 348" />
+          <path className="energy-line ac-line" d="M458 168 C374 168 306 168 220 168" markerEnd="url(#flowArrow)" />
+          <path className="energy-line dc-line" d="M704 168 C628 168 572 168 494 168" markerEnd="url(#flowArrow)" />
+          <path className="energy-line aux-line" d="M458 292 C420 342 326 372 228 398" />
+          <path className="energy-line aux-line" d="M472 292 C484 356 588 374 690 398" />
+          <path className="energy-line aux-line soft" d="M220 266 C178 318 152 356 126 398" />
+          <path className="energy-line aux-line soft" d="M704 266 C746 318 770 356 812 398" />
         </svg>
 
         <EnergyNode

@@ -44,6 +44,7 @@ function pointToDeviceRegister(point: PointModel): DeviceRegister {
     dataType: point.data_type === "float" ? "float32" : point.data_type,
     length: point.word_count,
     scale: point.scale,
+    offset: point.offset,
     unit: point.unit,
     range: point.min !== undefined && point.max !== undefined ? { min: point.min, max: point.max } : undefined,
     enum: Object.entries(point.enum_map).map(([value, label]) => ({ value: Number.isFinite(Number(value)) ? Number(value) : value, label })),

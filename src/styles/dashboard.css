@@ -320,7 +320,15 @@
 
 .energy-canvas {
   position: relative;
-  min-height: 438px;
+  display: grid;
+  grid-template-areas:
+    "grid pcs bms"
+    "aux aux aux";
+  grid-template-columns: minmax(200px, 0.92fr) minmax(250px, 1.05fr) minmax(200px, 0.92fr);
+  gap: 28px 22px;
+  align-items: start;
+  min-height: 0;
+  padding: 24px 30px 26px;
   overflow: hidden;
   border: 1px solid rgba(100, 210, 255, 0.15);
   border-radius: 22px;
@@ -334,6 +342,7 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     inset 0 0 82px rgba(34, 211, 238, 0.045);
+  isolation: isolate;
 }
 
 .energy-canvas::before,
@@ -353,7 +362,7 @@
 .energy-canvas::after {
   left: 8%;
   right: 8%;
-  bottom: 78px;
+  bottom: 124px;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(120, 220, 255, 0.48), rgba(110, 243, 165, 0.24), transparent);
   box-shadow: 0 0 22px rgba(34, 211, 238, 0.32);
@@ -366,6 +375,7 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+  pointer-events: none;
 }
 
 .energy-line {
@@ -397,11 +407,11 @@
 }
 
 .energy-node {
-  position: absolute;
+  position: relative;
   z-index: 2;
-  width: 29%;
-  min-width: 190px;
-  padding: 13px;
+  width: auto;
+  min-width: 0;
+  padding: 14px;
   border: 1px solid rgba(var(--tone-rgb), 0.32);
   border-radius: 18px;
   background:
@@ -416,22 +426,17 @@
 }
 
 .energy-node-grid {
-  left: 3%;
-  top: 70px;
+  grid-area: grid;
 }
 
 .energy-node-pcs {
-  left: 50%;
-  top: 50px;
-  width: 30%;
-  min-height: 234px;
+  grid-area: pcs;
+  min-height: 0;
   border-color: rgba(110, 243, 165, 0.46);
-  transform: translateX(-50%);
 }
 
 .energy-node-bms {
-  right: 3%;
-  top: 70px;
+  grid-area: bms;
 }
 
 .energy-node-head {
@@ -519,14 +524,12 @@
 }
 
 .aux-node-grid {
-  position: absolute;
+  position: relative;
+  grid-area: aux;
   z-index: 2;
-  left: 3%;
-  right: 3%;
-  bottom: 18px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 14px;
 }
 
 .aux-node {
@@ -1049,7 +1052,8 @@
   }
 
   .energy-canvas {
-    min-height: 382px;
+    padding: 20px 24px 22px;
+    gap: 22px 16px;
   }
 
   .energy-node {
@@ -1111,7 +1115,13 @@
   }
 
   .energy-canvas {
-    min-height: 720px;
+    grid-template-areas:
+      "grid"
+      "pcs"
+      "bms"
+      "aux";
+    grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .energy-node {
@@ -1122,26 +1132,14 @@
   .energy-node-grid,
   .energy-node-pcs,
   .energy-node-bms {
-    left: 4%;
-    right: 4%;
+    top: auto;
+    right: auto;
+    left: auto;
     transform: none;
-  }
-
-  .energy-node-grid {
-    top: 28px;
-  }
-
-  .energy-node-pcs {
-    top: 252px;
-  }
-
-  .energy-node-bms {
-    top: 482px;
   }
 
   .aux-node-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    bottom: 16px;
   }
 
   .energy-lines {

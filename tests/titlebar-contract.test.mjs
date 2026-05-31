@@ -9,6 +9,7 @@ const shellCss = fs.readFileSync("src/styles/shell.css", "utf8");
 const mainWindow = tauriConfig.app.windows[0];
 assert.equal(mainWindow.decorations, false, "Tauri main window should hide native decorations");
 assert.equal(mainWindow.resizable, true, "Frameless Tauri window should remain resizable");
+assert.equal(mainWindow.backgroundColor, "#071528", "Frameless Tauri window should use the app background as its native clear color");
 
 const permissions = new Set(tauriCapability.permissions);
 [

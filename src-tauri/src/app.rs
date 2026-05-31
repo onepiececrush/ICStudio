@@ -238,7 +238,10 @@ fn normalize_home_device_config(
 
 fn ensure_loopback_client(runtime: &mut LoopbackRuntime) -> Result<&mut TcpStream, String> {
     if runtime.client.is_none() {
-        runtime.client = Some(connect_modbus_tcp_master(&runtime.client_host, runtime.port)?);
+        runtime.client = Some(connect_modbus_tcp_master(
+            &runtime.client_host,
+            runtime.port,
+        )?);
     }
     runtime
         .client
@@ -463,12 +466,15 @@ pub(crate) fn get_modbus_simulator_status() -> Result<SimulatorServerStatus, Str
     let slot = SIMULATOR_SERVER
         .lock()
         .map_err(|_| "从机模拟状态锁定失败".to_string())?;
-    Ok(slot.as_ref().map(simulator_status).unwrap_or(SimulatorServerStatus {
-        running: false,
-        endpoint: "未启动".to_string(),
-        unit_id: 0,
-        logs: Vec::new(),
-    }))
+    Ok(slot
+        .as_ref()
+        .map(simulator_status)
+        .unwrap_or(SimulatorServerStatus {
+            running: false,
+            endpoint: "未启动".to_string(),
+            unit_id: 0,
+            logs: Vec::new(),
+        }))
 }
 
 #[tauri::command]
@@ -568,22 +574,18 @@ pub(crate) fn interrupt_loopback_communication() -> Result<HomeLoopbackDashboard
 
 #[tauri::command]
 pub(crate) fn get_app_snapshot() -> AppSnapshot {
-    let loopback_dashboard = LOOPBACK
-        .lock()
-        .ok()
-        .and_then(|mut runtime| {
-            runtime.as_mut().map(|state| {
-                poll_loopback_runtime(state)
-                    .unwrap_or_else(|_| {
-                        loopback_error_dashboard(
-                            &state.endpoint,
-                            None,
-                            state.store.logs(),
-                            state.self_test_mode,
-                        )
-                    })
+    let loopback_dashboard = LOOPBACK.lock().ok().and_then(|mut runtime| {
+        runtime.as_mut().map(|state| {
+            poll_loopback_runtime(state).unwrap_or_else(|_| {
+                loopback_error_dashboard(
+                    &state.endpoint,
+                    None,
+                    state.store.logs(),
+                    state.self_test_mode,
+                )
             })
-        });
+        })
+    });
     let endpoint = loopback_dashboard
         .as_ref()
         .map(|d| d.endpoint.clone())
@@ -613,7 +615,12 @@ pub(crate) fn get_app_snapshot() -> AppSnapshot {
                 value: if connected { "96" } else { "--" }.to_string(),
                 unit: "分",
                 tone: "blue",
-                helper: if connected { "较昨日 +2 分" } else { "等待连接" }.to_string(),
+                helper: if connected {
+                    "较昨日 +2 分"
+                } else {
+                    "等待连接"
+                }
+                .to_string(),
             },
             MetricCard {
                 key: "online",
@@ -621,7 +628,12 @@ pub(crate) fn get_app_snapshot() -> AppSnapshot {
                 value: if connected { "12" } else { "0" }.to_string(),
                 unit: "台",
                 tone: "green",
-                helper: if connected { "正常 12 / 异常 0" } else { "未连接" }.to_string(),
+                helper: if connected {
+                    "正常 12 / 异常 0"
+                } else {
+                    "未连接"
+                }
+                .to_string(),
             },
             MetricCard {
                 key: "alarm",
@@ -632,7 +644,12 @@ pub(crate) fn get_app_snapshot() -> AppSnapshot {
                     .unwrap_or_else(|| "0".to_string()),
                 unit: "条",
                 tone: "red",
-                helper: if connected { "紧急 / 重要" } else { "等待连接" }.to_string(),
+                helper: if connected {
+                    "紧急 / 重要"
+                } else {
+                    "等待连接"
+                }
+                .to_string(),
             },
             MetricCard {
                 key: "simulation",
@@ -645,7 +662,12 @@ pub(crate) fn get_app_snapshot() -> AppSnapshot {
                 .to_string(),
                 unit: "个",
                 tone: "purple",
-                helper: if connected { "首页连接" } else { "未连接" }.to_string(),
+                helper: if connected {
+                    "首页连接"
+                } else {
+                    "未连接"
+                }
+                .to_string(),
             },
             MetricCard {
                 key: "autotest",
@@ -662,7 +684,12 @@ pub(crate) fn get_app_snapshot() -> AppSnapshot {
                     .unwrap_or_else(|| "0".to_string()),
                 unit: "项",
                 tone: "cyan",
-                helper: if connected { "首页数据读取" } else { "等待连接" }.to_string(),
+                helper: if connected {
+                    "首页数据读取"
+                } else {
+                    "等待连接"
+                }
+                .to_string(),
             },
             MetricCard {
                 key: "upgrade",
@@ -670,7 +697,12 @@ pub(crate) fn get_app_snapshot() -> AppSnapshot {
                 value: if connected { "1" } else { "0" }.to_string(),
                 unit: "项",
                 tone: "orange",
-                helper: if connected { "成功率 87%" } else { "等待连接" }.to_string(),
+                helper: if connected {
+                    "成功率 87%"
+                } else {
+                    "等待连接"
+                }
+                .to_string(),
             },
         ],
         devices: (1..=4)

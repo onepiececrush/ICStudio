@@ -731,6 +731,10 @@
   border: 1px solid rgba(110, 243, 165, 0.22);
 }
 
+.simulator-notice.tone-info {
+  border: 1px solid rgba(34, 211, 238, 0.22);
+}
+
 .simulator-sidebar-facts {
   display: grid;
   gap: 10px;
@@ -1860,6 +1864,145 @@
   padding: 9px;
   border-bottom: 1px solid rgba(132, 196, 255, 0.14);
   white-space: nowrap;
+}
+
+.host-verify-workbench,
+.host-verify-layout {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.host-verify-layout {
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+}
+
+.host-verify-hero h1 {
+  margin-top: 4px;
+}
+
+.host-verify-strip {
+  grid-template-columns: minmax(180px, 1.2fr) repeat(4, minmax(120px, 0.7fr));
+}
+
+.host-config-field,
+.host-summary-tile {
+  display: grid;
+  gap: 6px;
+}
+
+.host-config-field span,
+.host-summary-tile span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.host-config-field input {
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(132, 196, 255, 0.22);
+  border-radius: 10px;
+  outline: 0;
+  background: rgba(6, 20, 41, 0.72);
+  color: var(--text);
+}
+
+.host-verify-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.host-summary-tile {
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid rgba(132, 196, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.host-summary-tile strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.host-summary-tile.tone-success {
+  border-color: rgba(110, 243, 165, 0.24);
+}
+
+.host-summary-tile.tone-danger {
+  border-color: rgba(255, 97, 113, 0.3);
+}
+
+.host-verify-search {
+  min-width: 260px;
+}
+
+.host-verify-search span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.host-verify-table code {
+  color: var(--cyan);
+  font-family: Consolas, "SFMono-Regular", monospace;
+}
+
+.host-access,
+.host-quality,
+.host-readonly {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(132, 196, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.host-access.access-readwrite,
+.host-quality.good {
+  border-color: rgba(110, 243, 165, 0.3);
+  color: var(--green);
+}
+
+.host-access.access-write {
+  border-color: rgba(250, 204, 21, 0.32);
+  color: var(--amber);
+}
+
+.host-access.access-read {
+  border-color: rgba(34, 211, 238, 0.26);
+  color: var(--cyan);
+}
+
+.host-quality.bad {
+  border-color: rgba(255, 97, 113, 0.35);
+  color: var(--red);
+}
+
+.host-quality.skipped,
+.host-quality.idle,
+.host-readonly {
+  color: var(--muted);
+}
+
+@media (max-width: 1180px) {
+  .host-verify-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .host-verify-strip,
+  .host-verify-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .module-value-grid {

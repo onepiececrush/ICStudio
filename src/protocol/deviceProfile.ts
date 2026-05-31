@@ -47,6 +47,7 @@ export type DeviceRegister = {
   dataType: RegisterDataType;
   length: number;
   scale: number;
+  offset?: number;
   unit: string;
   range?: RegisterRange;
   enum: RegisterEnumOption[];

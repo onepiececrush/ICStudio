@@ -5,8 +5,8 @@ mod modbus;
 use crate::app::{
     clear_loopback_faults, connect_home_modbus_dashboard, disconnect_home_modbus_dashboard,
     get_app_snapshot, get_modbus_simulator_status, inject_pcs3_fault,
-    interrupt_loopback_communication, poll_home_loopback_dashboard,
-    set_loopback_value, set_modbus_simulator_register_value, start_home_loopback_selftest,
+    interrupt_loopback_communication, poll_home_loopback_dashboard, set_loopback_value,
+    set_modbus_simulator_register_value, start_home_loopback_selftest,
     start_modbus_simulator_server, stop_home_loopback_selftest, stop_modbus_simulator_server,
 };
 use crate::history::{
@@ -18,6 +18,9 @@ use crate::modbus::backend::{
     read_modbus_tcp_registers, remove_modbus_tcp_channel, start_modbus_tcp_channel,
     stop_modbus_tcp_channel, write_modbus_tcp_multiple_registers, write_modbus_tcp_single_register,
 };
+use crate::modbus::host_verification::{
+    host_verify_read_all_registers, host_verify_write_register,
+};
 
 pub use crate::history::{
     export_history_trend_csv_for_test, initialize_history_database_for_test,
@@ -28,15 +31,18 @@ pub use crate::history::{
 };
 pub use crate::modbus::{
     clear_pcs3_fault_for_test, connect_and_read_registers_for_test, create_loopback_store_for_test,
+    host_verify_read_all_registers_for_test, host_verify_write_register_for_test,
     inject_pcs3_fault_for_test, poll_loopback_dashboard_for_test,
     poll_loopback_dashboard_with_store_for_test, production_read_registers_for_test,
     production_write_multiple_registers_for_test, production_write_single_register_for_test,
     remove_production_channel_for_test, set_loopback_number_for_test,
     start_modbus_tcp_slave_for_test, start_production_channel_for_test,
     stop_production_channel_for_test, HomeDashboardValue, HomeLoopbackDashboard, HomePcsModule,
-    HomeVerificationRow, ModbusBackendLogEntry, ModbusBackendSnapshot, ModbusChannelSnapshot,
-    ModbusChannelStats, ModbusTcpChannelConfig, ModbusTcpSlaveServer, ProductionPointConfig,
-    ProductionPointValue, SimulatedRegisterStore,
+    HomeVerificationRow, HostVerificationConnectionConfig, HostVerificationReadSummary,
+    HostVerificationRegister, HostVerificationValue, HostVerificationWriteResult,
+    ModbusBackendLogEntry, ModbusBackendSnapshot, ModbusChannelSnapshot, ModbusChannelStats,
+    ModbusTcpChannelConfig, ModbusTcpSlaveServer, ProductionPointConfig, ProductionPointValue,
+    SimulatedRegisterStore,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -67,6 +73,8 @@ pub fn run() {
             read_modbus_tcp_registers,
             write_modbus_tcp_single_register,
             write_modbus_tcp_multiple_registers,
+            host_verify_read_all_registers,
+            host_verify_write_register,
             initialize_history_database,
             write_history_batch,
             query_history_trend,

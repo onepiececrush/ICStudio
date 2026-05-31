@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -43,6 +43,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { key: "dashboard", label: "工程首页", icon: Home },
   { key: "communication", label: "通信调试", icon: Cable },
+  { key: "hostVerification", label: "主机验证", icon: Gauge },
   { key: "protocol", label: "协议管理", icon: Layers3 },
   { key: "devices", label: "设备管理", icon: Cpu },
   { key: "monitor", label: "实时监控", icon: Gauge },
@@ -72,6 +73,84 @@ type AppShellProps = {
   onSimulatorRegisterCommit: (registerId: string, value: string, source?: SimulatorRegisterCommitSource) => Promise<boolean>;
   onSimulatorTogglePin: (registerId: string) => void;
 };
+
+type FloatingPanelBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type ResizeEdge = "n" | "e" | "s" | "w" | "ne" | "nw" | "se" | "sw";
+
+const framePanelMinWidth = 380;
+const framePanelMinHeight = 300;
+const framePanelMargin = 14;
+const framePanelTopGuard = 64;
+const frameResizeEdges: ResizeEdge[] = ["n", "e", "s", "w", "ne", "nw", "se", "sw"];
+
+function createFramePanelBounds(): FloatingPanelBounds {
+  if (typeof window === "undefined") {
+    return { x: 560, y: 78, width: 720, height: 560 };
+  }
+  const width = Math.min(720, Math.max(framePanelMinWidth, window.innerWidth - framePanelMargin * 2));
+  const height = Math.min(620, Math.max(framePanelMinHeight, window.innerHeight - framePanelTopGuard - framePanelMargin * 2));
+  return clampFramePanelBounds({
+    x: window.innerWidth - width - 24,
+    y: framePanelTopGuard + 14,
+    width,
+    height,
+  });
+}
+
+function clampFramePanelBounds(bounds: FloatingPanelBounds): FloatingPanelBounds {
+  if (typeof window === "undefined") return bounds;
+  const maxWidth = Math.max(framePanelMinWidth, window.innerWidth - framePanelMargin * 2);
+  const maxHeight = Math.max(framePanelMinHeight, window.innerHeight - framePanelTopGuard - framePanelMargin * 2);
+  const width = Math.min(Math.max(bounds.width, framePanelMinWidth), maxWidth);
+  const height = Math.min(Math.max(bounds.height, framePanelMinHeight), maxHeight);
+  return {
+    width,
+    height,
+    x: Math.min(Math.max(bounds.x, framePanelMargin), window.innerWidth - width - framePanelMargin),
+    y: Math.min(Math.max(bounds.y, framePanelTopGuard), window.innerHeight - height - framePanelMargin),
+  };
+}
+
+function clampValue(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function resizeFramePanelBounds(bounds: FloatingPanelBounds, edge: ResizeEdge, deltaX: number, deltaY: number): FloatingPanelBounds {
+  if (typeof window === "undefined") return bounds;
+
+  let left = bounds.x;
+  let right = bounds.x + bounds.width;
+  let top = bounds.y;
+  let bottom = bounds.y + bounds.height;
+  const maxRight = window.innerWidth - framePanelMargin;
+  const maxBottom = window.innerHeight - framePanelMargin;
+
+  if (edge.includes("w")) {
+    left = clampValue(left + deltaX, framePanelMargin, right - framePanelMinWidth);
+  }
+  if (edge.includes("e")) {
+    right = clampValue(right + deltaX, left + framePanelMinWidth, maxRight);
+  }
+  if (edge.includes("n")) {
+    top = clampValue(top + deltaY, framePanelTopGuard, bottom - framePanelMinHeight);
+  }
+  if (edge.includes("s")) {
+    bottom = clampValue(bottom + deltaY, top + framePanelMinHeight, maxBottom);
+  }
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
 
 export function AppShell(props: AppShellProps) {
   const [frameDrawerOpen, setFrameDrawerOpen] = useState(false);
@@ -402,15 +481,89 @@ function GlobalFrameLogDrawer({
   logs: FrameLog[];
   onClose: () => void;
 }) {
+  const [bounds, setBounds] = useState(createFramePanelBounds);
+  const [interaction, setInteraction] = useState<"drag" | "resize" | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setBounds((current) => clampFramePanelBounds(current));
+  }, [open]);
+
+  useEffect(() => {
+    const handleResize = () => setBounds((current) => clampFramePanelBounds(current));
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const startDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0 || (event.target instanceof HTMLElement && event.target.closest("button"))) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startBounds = bounds;
+    setInteraction("drag");
+    const handleMove = (moveEvent: PointerEvent) => {
+      setBounds(clampFramePanelBounds({
+        ...startBounds,
+        x: startBounds.x + moveEvent.clientX - startX,
+        y: startBounds.y + moveEvent.clientY - startY,
+      }));
+    };
+    const handleEnd = () => {
+      setInteraction(null);
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleEnd);
+      window.removeEventListener("pointercancel", handleEnd);
+    };
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleEnd);
+    window.addEventListener("pointercancel", handleEnd);
+  };
+
+  const startResize = (edge: ResizeEdge, event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startBounds = bounds;
+    setInteraction("resize");
+    const handleMove = (moveEvent: PointerEvent) => {
+      setBounds(resizeFramePanelBounds(startBounds, edge, moveEvent.clientX - startX, moveEvent.clientY - startY));
+    };
+    const handleEnd = () => {
+      setInteraction(null);
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleEnd);
+      window.removeEventListener("pointercancel", handleEnd);
+    };
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleEnd);
+    window.addEventListener("pointercancel", handleEnd);
+  };
+
+  const panelStyle = {
+    "--frame-panel-x": `${bounds.x}px`,
+    "--frame-panel-y": `${bounds.y}px`,
+    "--frame-panel-width": `${bounds.width}px`,
+    "--frame-panel-height": `${bounds.height}px`,
+  } as CSSProperties;
+
   return (
-    <aside className={`global-frame-drawer ${open ? "open" : ""}`} aria-label="全局报文记录">
-      <div className="global-frame-head">
+    <aside
+      className={`global-frame-drawer global-frame-float ${open ? "open" : ""} ${interaction ? `is-${interaction}` : ""}`}
+      style={panelStyle}
+      aria-label="全局报文记录"
+    >
+      <div className="global-frame-head" onPointerDown={startDrag}>
         <div>
           <span>Global Frame Monitor</span>
           <strong>报文记录</strong>
-          <small>{logs.length ? `累计 ${logs.length} 条` : "等待从机模拟产生报文"}</small>
+          <small>{logs.length ? `累计 ${logs.length} 条 · 拖标题移动，拖边缘缩放` : "等待从机模拟产生报文 · 可拖拽 / 边缘缩放"}</small>
         </div>
-        <button type="button" onClick={onClose} aria-label="关闭报文记录"><X size={17} /></button>
+        <div className="global-frame-tools">
+          <button type="button" onClick={onClose} aria-label="关闭报文记录"><X size={17} /></button>
+        </div>
       </div>
       <div className="global-frame-list">
         {logs.length ? logs.map((log, index) => (
@@ -428,6 +581,14 @@ function GlobalFrameLogDrawer({
           </div>
         )}
       </div>
+      {frameResizeEdges.map((edge) => (
+        <span
+          className={`global-frame-resize-handle resize-${edge}`}
+          onPointerDown={(event) => startResize(edge, event)}
+          aria-hidden="true"
+          key={edge}
+        />
+      ))}
     </aside>
   );
 }
