@@ -50,7 +50,11 @@ abstract final class AppDecor {
   }
 
   /// 颜色辉光（用于主操作按钮 / 实时读数 / 在线状态）。
-  static List<BoxShadow> glow(Color color, {double blur = 20, double opacity = 0.45}) {
+  static List<BoxShadow> glow(
+    Color color, {
+    double blur = 20,
+    double opacity = 0.45,
+  }) {
     return [
       BoxShadow(
         color: color.withValues(alpha: opacity),
@@ -95,17 +99,34 @@ class _BlueprintPainter extends CustomPainter {
       ..strokeWidth = 1;
     var i = 0;
     for (double x = 0; x <= size.width; x += step, i++) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), i % 4 == 0 ? major : minor);
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        i % 4 == 0 ? major : minor,
+      );
     }
     i = 0;
     for (double y = 0; y <= size.height; y += step, i++) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), i % 4 == 0 ? major : minor);
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        i % 4 == 0 ? major : minor,
+      );
     }
     // 左上角辉光，模拟控制台环境光
     final glow = Paint()
-      ..shader = RadialGradient(
-        colors: [AppColors.primary.withValues(alpha: 0.05), Colors.transparent],
-      ).createShader(Rect.fromCircle(center: const Offset(0, 0), radius: size.width * 0.5));
+      ..shader =
+          RadialGradient(
+            colors: [
+              AppColors.primary.withValues(alpha: 0.05),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(
+              center: const Offset(0, 0),
+              radius: size.width * 0.5,
+            ),
+          );
     canvas.drawRect(Offset.zero & size, glow);
   }
 
@@ -116,11 +137,7 @@ class _BlueprintPainter extends CustomPainter {
 /// 一次性入场动效：淡入 + 上浮。通过 [order] 错开时长形成级联效果。
 /// 使用 TweenAnimationBuilder，不依赖定时器/控制器，`pumpAndSettle` 安全。
 class RevealOnce extends StatelessWidget {
-  const RevealOnce({
-    required this.child,
-    this.order = 0,
-    super.key,
-  });
+  const RevealOnce({required this.child, this.order = 0, super.key});
 
   final Widget child;
   final int order;
@@ -134,7 +151,10 @@ class RevealOnce extends StatelessWidget {
       builder: (context, t, child) {
         return Opacity(
           opacity: t.clamp(0.0, 1.0),
-          child: Transform.translate(offset: Offset(0, (1 - t) * 16), child: child),
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 16),
+            child: child,
+          ),
         );
       },
       child: child,
@@ -144,7 +164,12 @@ class RevealOnce extends StatelessWidget {
 
 /// 状态指示点（可发光）。
 class StatusDot extends StatelessWidget {
-  const StatusDot({required this.color, this.size = 8, this.glow = true, super.key});
+  const StatusDot({
+    required this.color,
+    this.size = 8,
+    this.glow = true,
+    super.key,
+  });
 
   final Color color;
   final double size;
@@ -164,9 +189,14 @@ class StatusDot extends StatelessWidget {
   }
 }
 
-/// 仪表小标签（全大写、宽字距、等宽），用于段落/卡片的「kicker」。
+/// 仪表小标签，用于段落/卡片的 kicker。
 class Kicker extends StatelessWidget {
-  const Kicker(this.text, {this.color = AppColors.textFaint, this.fontSize = 9.5, super.key});
+  const Kicker(
+    this.text, {
+    this.color = AppColors.textFaint,
+    this.fontSize = 9.5,
+    super.key,
+  });
 
   final String text;
   final Color color;
@@ -182,7 +212,7 @@ class Kicker extends StatelessWidget {
         fontSize: fontSize,
         fontWeight: FontWeight.w600,
         color: color,
-        letterSpacing: 1.6,
+        letterSpacing: 0.8,
       ),
     );
   }

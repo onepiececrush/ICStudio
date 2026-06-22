@@ -120,6 +120,36 @@ void main() {
     },
   );
 
+  testWidgets('opens the draggable global frame log drawer from titlebar', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ICStudioApp(
+        backendStatus: backendStatusFixture,
+        snapshot: snapshotFixture,
+      ),
+    );
+
+    expect(find.byKey(const Key('global-frame-drawer')), findsNothing);
+    await tester.tap(find.byKey(const Key('global-frame-open')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('global-frame-drawer')), findsOneWidget);
+    expect(find.byKey(const Key('global-frame-search')), findsOneWidget);
+    expect(find.text('读取报文'), findsOneWidget);
+    expect(find.text('写入报文'), findsOneWidget);
+    expect(find.text('其他报文'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('global-frame-close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('global-frame-drawer')), findsNothing);
+  });
+
   testWidgets('shows decoded Modbus realtime values', (
     WidgetTester tester,
   ) async {

@@ -5,6 +5,7 @@ const protocolWorkbench = fs.readFileSync("src/components/ProtocolLabWorkbench.t
 const simulatorWorkbench = fs.readFileSync("src/components/SimulatorWorkbench.tsx", "utf8");
 const simulatorInput = fs.readFileSync("src/components/SimulatorRegisterValueInput.tsx", "utf8");
 const appShell = fs.readFileSync("src/components/AppShell.tsx", "utf8");
+const globalQuickDrawer = fs.readFileSync("src/components/GlobalSimulatorQuickDrawer.tsx", "utf8");
 const modulePanel = fs.readFileSync("src/components/ModulePanel.tsx", "utf8");
 const protocolData = fs.readFileSync("src/data/protocolLab.ts", "utf8");
 const profileModel = fs.readFileSync("src/protocol/deviceProfile.ts", "utf8");
@@ -48,7 +49,7 @@ for (const text of [
   "最近修改",
   "快速搜索结果",
 ]) {
-  assert.match(appShell, new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `app shell should render ${text}`);
+  assert.match(globalQuickDrawer, new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `global quick drawer should render ${text}`);
 }
 
 for (const field of ["地址", "名称", "功能码", "读写权限", "数据类型", "长度", "倍率", "单位", "范围", "枚举", "bit 位", "说明", "分组"]) {

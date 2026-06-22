@@ -42,7 +42,7 @@ pub use crate::modbus::{
     HostVerificationRegister, HostVerificationValue, HostVerificationWriteResult,
     ModbusBackendLogEntry, ModbusBackendSnapshot, ModbusChannelSnapshot, ModbusChannelStats,
     ModbusTcpChannelConfig, ModbusTcpSlaveServer, ProductionPointConfig, ProductionPointValue,
-    SimulatedRegisterStore,
+    SimulatedRegisterStore, SimulatorFrameLog,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

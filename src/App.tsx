@@ -11,6 +11,7 @@ import { initializeNativeHistoryDatabase, persistSnapshotToNativeHistory, type N
 import { loadSnapshot } from "./lib/snapshot";
 import { inspectPointBinding, type PointBindingTrace } from "./pointBinding/registry";
 import type { DeviceProfile, DeviceRegister } from "./protocol/deviceProfile";
+import { mergeSimulatorStatusFrameLogs } from "./simulator/backendFrameLogs";
 import { buildModbusTcpWriteSingleRegisterFrame, createSimulatorEngine, type FrameLog } from "./simulator/simulatorEngine";
 import { parseSimulatorRegisterInput, toSimulatorNumericValue } from "./simulator/registerValue";
 import {
@@ -101,7 +102,7 @@ function App() {
           running: status.running,
           serverStatus: status,
           backendLogs: status.logs,
-          frameLogs: status.logs.map((log) => createBackendFrameLog(log)),
+          frameLogs: mergeSimulatorStatusFrameLogs(current.frameLogs, status.frameLogs),
         }));
       })
       .catch(() => {
@@ -311,6 +312,7 @@ function App() {
         running: status.running,
         serverStatus: status,
         backendLogs: status.logs,
+        frameLogs: mergeSimulatorStatusFrameLogs(current.frameLogs, status.frameLogs),
       }));
     } catch (error) {
       if (options.silent) return;
@@ -340,6 +342,7 @@ function App() {
     }
 
     try {
+      let backendFrameLogs = simulatorWorkspace.serverStatus.frameLogs;
       if (simulatorWorkspace.running) {
         if (parsed.numericValue === null) {
           setSimulatorWorkspace((current) => ({
@@ -352,10 +355,12 @@ function App() {
           address: register.address,
           value: parsed.numericValue,
         });
+        backendFrameLogs = status.frameLogs;
         setSimulatorWorkspace((current) => ({
           ...current,
           serverStatus: status,
           backendLogs: status.logs,
+          frameLogs: mergeSimulatorStatusFrameLogs(current.frameLogs, status.frameLogs),
         }));
       }
 
@@ -367,7 +372,7 @@ function App() {
         rawValue: parsed.rawValue ?? parsed.numericValue ?? 0,
       });
       simulatorTransactionIdRef.current = simulatorTransactionIdRef.current >= 0xffff ? 1 : simulatorTransactionIdRef.current + 1;
-      const nextFrameLogs: FrameLog[] = [
+      const nextFrameLogs: FrameLog[] = simulatorWorkspace.running ? [] : [
         {
           direction: "request",
           time: timestamp,
@@ -400,7 +405,7 @@ function App() {
           ...current.registerMeta,
           [registerId]: { lastModifiedAt: timestamp, lastModifiedSource: source },
         },
-        frameLogs: [...nextFrameLogs, ...current.frameLogs].slice(0, 120),
+        frameLogs: mergeSimulatorStatusFrameLogs(current.frameLogs, backendFrameLogs, nextFrameLogs),
         notice: null,
       }));
       return true;
@@ -451,7 +456,7 @@ function App() {
         busy: false,
         serverStatus: status,
         backendLogs: status.logs,
-        frameLogs: [nextFrameLog, ...status.logs.map((log) => createBackendFrameLog(log))].slice(0, 120),
+        frameLogs: mergeSimulatorStatusFrameLogs([], status.frameLogs, [nextFrameLog]),
         notice: { tone: "success", text: `模拟已启动：${profile.name} @ tcp://${status.endpoint} unit=${status.unitId}` },
       }));
     } catch (error) {
@@ -484,7 +489,7 @@ function App() {
         busy: false,
         serverStatus: status,
         backendLogs: status.logs,
-        frameLogs: [nextFrameLog, ...current.frameLogs].slice(0, 120),
+        frameLogs: [nextFrameLog, ...current.frameLogs].slice(0, 1000),
         notice: { tone: "success", text: "从机模拟已停止" },
       }));
     } catch (error) {
@@ -548,7 +553,7 @@ function App() {
           },
           { ...current.registerMeta },
         ),
-        frameLogs: [nextFrameLog, ...current.frameLogs].slice(0, 120),
+        frameLogs: [nextFrameLog, ...current.frameLogs].slice(0, 1000),
         exceptionStats: simulatorEngine.getExceptionStats(),
         notice: { tone: "success", text: `场景已应用，共更新 ${changedRegisters.length} 个寄存器` },
       }));
@@ -688,15 +693,6 @@ function buildSimulatorRegisterPayload(register: DeviceRegister): SimulatorRegis
     scale: register.scale,
     unit: register.unit,
     currentValue,
-  };
-}
-
-function createBackendFrameLog(log: string): FrameLog {
-  return {
-    direction: "response",
-    time: formatSimulatorTime(new Date()),
-    frame: log,
-    note: "从机模拟后端",
   };
 }
 

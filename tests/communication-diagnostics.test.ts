@@ -11,6 +11,11 @@ import {
   replayFrameToSimulator,
   type DiagnosticFrameRecord,
 } from "../src/communication/diagnostics";
+import {
+  filterDiagnosticFrameViews,
+  getDiagnosticFrameOperation,
+  summarizeDiagnosticFrameOperations,
+} from "../src/communication/frameView";
 
 const baseTime = Date.parse("2026-05-24T00:00:00.000Z");
 
@@ -117,6 +122,24 @@ test("records request/response pairs, computes stats, filters, and saves session
   assert.match(createDiagnosticSummary(session, stats), /成功率 25.0%/);
 });
 
+test("classifies read and write frames, filters by operation, and searches frame text", () => {
+  const frames = [
+    diagnosticFrame({ id: "read-request", functionCode: 3, rawFrame: "00 01 00 00 00 06 01 03 36 B1 00 02", description: "读取保持寄存器" }),
+    diagnosticFrame({ id: "write-request", functionCode: 6, rawFrame: "00 02 00 00 00 06 01 06 9C 42 00 7B", description: "写单寄存器 active-power" }),
+    diagnosticFrame({ id: "other-response", direction: "response", functionCode: 17, rawFrame: "00 03 00 00 00 03 01 11 02", description: "设备识别" }),
+  ];
+
+  assert.deepEqual(frames.map(getDiagnosticFrameOperation), ["read", "write", "other"]);
+  assert.deepEqual(summarizeDiagnosticFrameOperations(frames), { total: 3, read: 1, write: 1, other: 1 });
+
+  const writeFrames = filterDiagnosticFrameViews(frames, { operation: "write" });
+  assert.deepEqual(writeFrames.map((frame) => frame.id), ["write-request"]);
+  assert.equal(writeFrames[0]?.operationLabel, "写入报文");
+
+  const searched = filterDiagnosticFrameViews(frames, { keyword: "active-power" });
+  assert.deepEqual(searched.map((frame) => frame.id), ["write-request"]);
+});
+
 test("exports frames and replays selected history frames to a simulator with mutations", async () => {
   const frame: DiagnosticFrameRecord = {
     id: "frame-1",
@@ -155,4 +178,24 @@ test("exports frames and replays selected history frames to a simulator with mut
 
 function hex(value: string): Uint8Array {
   return new Uint8Array(value.trim().split(/\s+/).map((part) => Number.parseInt(part, 16)));
+}
+
+function diagnosticFrame(patch: Partial<DiagnosticFrameRecord>): DiagnosticFrameRecord {
+  return {
+    id: "frame",
+    requestId: "frame",
+    timestamp: baseTime,
+    time: "2026-05-24 00:00:00.000",
+    direction: "request",
+    channel: "tcp://127.0.0.1:1502",
+    protocol: "TCP",
+    unitId: 1,
+    functionCode: 3,
+    startAddress: 14001,
+    quantity: 1,
+    result: "pending",
+    rawFrame: "00 01",
+    description: "frame",
+    ...patch,
+  };
 }

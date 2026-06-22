@@ -5,7 +5,7 @@ use crate::modbus::loopback::{
 };
 use crate::modbus::{
     HomeLoopbackDashboard, HomeVerificationRow, ModbusTcpSlaveServer, SimulatedRegisterStore,
-    SimulatorRegisterDefinition,
+    SimulatorFrameLog, SimulatorRegisterDefinition,
 };
 use serde::Serialize;
 use std::net::TcpStream;
@@ -116,6 +116,7 @@ pub(crate) struct SimulatorServerStatus {
     endpoint: String,
     unit_id: u8,
     logs: Vec<String>,
+    frame_logs: Vec<SimulatorFrameLog>,
 }
 
 // 首页只保留一个 Modbus TCP 主站长连接：Tauri command 可能并发调用，
@@ -161,6 +162,7 @@ fn simulator_status(runtime: &SimulatorServerRuntime) -> SimulatorServerStatus {
         endpoint: runtime.endpoint.clone(),
         unit_id: runtime.unit_id,
         logs: runtime.store.logs(),
+        frame_logs: runtime.store.frame_logs(),
     }
 }
 
@@ -439,7 +441,9 @@ pub(crate) fn set_modbus_simulator_register_value(
     let runtime = slot
         .as_mut()
         .ok_or_else(|| "从机模拟尚未启动".to_string())?;
-    runtime.store.set_number(address, value)?;
+    runtime
+        .store
+        .set_number_from_frontend_write(address, value, runtime.unit_id)?;
     Ok(simulator_status(runtime))
 }
 
@@ -458,6 +462,7 @@ pub(crate) fn stop_modbus_simulator_server() -> Result<SimulatorServerStatus, St
         endpoint: stopped_endpoint,
         unit_id: 0,
         logs: vec!["从机模拟 TCP Server 已停止".to_string()],
+        frame_logs: Vec::new(),
     })
 }
 
@@ -474,6 +479,7 @@ pub(crate) fn get_modbus_simulator_status() -> Result<SimulatorServerStatus, Str
             endpoint: "未启动".to_string(),
             unit_id: 0,
             logs: Vec::new(),
+            frame_logs: Vec::new(),
         }))
 }
 

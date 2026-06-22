@@ -20,5 +20,6 @@ pub use loopback::{
     inject_pcs3_fault_for_test, poll_loopback_dashboard_for_test,
     poll_loopback_dashboard_with_store_for_test, set_loopback_number_for_test,
     start_modbus_tcp_slave_for_test, HomeDashboardValue, HomeLoopbackDashboard, HomePcsModule,
-    HomeVerificationRow, ModbusTcpSlaveServer, SimulatedRegisterStore, SimulatorRegisterDefinition,
+    HomeVerificationRow, ModbusTcpSlaveServer, SimulatedRegisterStore, SimulatorFrameLog,
+    SimulatorRegisterDefinition,
 };

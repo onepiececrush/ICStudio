@@ -5,6 +5,8 @@ use std::path::Path;
 use calamine::{open_workbook_auto, Data, Reader};
 use serde_json::Value;
 
+const HEADER_SCAN_ROWS: usize = 80;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct ImportedSimulatorRegister {
     pub id: String,
@@ -232,7 +234,7 @@ fn parse_workbook(path: &str, fallback_name: &str) -> Result<ImportedSimulatorPr
 }
 
 fn table_rows(values: Vec<Vec<String>>) -> Option<Vec<HashMap<String, String>>> {
-    let header_index = values.iter().take(20).position(|row| {
+    let header_index = values.iter().take(HEADER_SCAN_ROWS).position(|row| {
         let normalized = row
             .iter()
             .map(|value| normalize_header(value))
@@ -397,7 +399,16 @@ fn aliases(key: &str) -> &'static [&'static str] {
             "offset",
             "偏移地址",
         ],
-        "name" => &["名称", "变量名称", "点位名称", "name", "tag", "label"],
+        "name" => &[
+            "名称",
+            "变量名称",
+            "点位名称",
+            "寄存器名称",
+            "registername",
+            "name",
+            "tag",
+            "label",
+        ],
         "function_code" => &["功能码", "functioncode", "function", "fc"],
         "access" => &["读写权限", "权限", "access", "rw", "读写", "操作"],
         "data_type" => &["数据类型", "类型", "datatype", "type"],
@@ -553,11 +564,51 @@ mod tests {
     }
 
     #[test]
+    fn maps_real_eve_register_headers() {
+        let rows = vec![HashMap::from([
+            ("寄存器地址".to_string(), "14006".to_string()),
+            ("大小".to_string(), "1".to_string()),
+            ("读写属性".to_string(), "R".to_string()),
+            ("类型".to_string(), "int16".to_string()),
+            ("寄存器名称".to_string(), "总有功功率".to_string()),
+            ("单位".to_string(), "0.1kW".to_string()),
+            ("备注".to_string(), "EVE 实际协议表头".to_string()),
+        ])];
+        let profile = profile_from_rows("EVE", rows).unwrap();
+        assert_eq!(profile.registers[0].address, 14006);
+        assert_eq!(profile.registers[0].name, "总有功功率");
+        assert_eq!(profile.registers[0].data_type, "int16");
+    }
+
+    #[test]
+    fn detects_register_table_header_below_intro_rows() {
+        let mut values = vec![vec!["说明".to_string()]; 25];
+        values.push(vec![
+            "".to_string(),
+            "寄存器地址".to_string(),
+            "大小".to_string(),
+            "读写属性".to_string(),
+            "类型".to_string(),
+            "寄存器名称".to_string(),
+        ]);
+        values.push(vec![
+            "".to_string(),
+            "14001".to_string(),
+            "1".to_string(),
+            "R".to_string(),
+            "uint16".to_string(),
+            "PCS在线台数".to_string(),
+        ]);
+        let rows = table_rows(values).unwrap();
+        let profile = profile_from_rows("deep-header", rows).unwrap();
+        assert_eq!(profile.registers[0].address, 14001);
+        assert_eq!(profile.registers[0].name, "PCS在线台数");
+    }
+
+    #[test]
     fn imports_profile_json_with_scenario() {
-        let path = std::env::temp_dir().join(format!(
-            "icstudio-profile-{}.json",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("icstudio-profile-{}.json", std::process::id()));
         fs::write(
             &path,
             r#"{
@@ -571,12 +622,25 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let profile =
-            import_device_simulator_profile(path.to_string_lossy().into_owned()).unwrap();
+        let profile = import_device_simulator_profile(path.to_string_lossy().into_owned()).unwrap();
         let _ = fs::remove_file(path);
         assert_eq!(profile.name, "测试协议");
         assert_eq!(profile.registers[0].engineering_value, 12.5);
         assert_eq!(profile.scenarios[0].fault_mode, "exceptionCode");
         assert_eq!(profile.scenarios[0].exception_code, 3);
+    }
+
+    #[test]
+    fn imports_real_eve_workbook() {
+        let path = Path::new(
+            "../../docs/source-materials/protocols/EVE_PCSmodbus通信协议V3.13 (BMS_V1.06).xlsx",
+        );
+        let profile = import_device_simulator_profile(path.to_string_lossy().into_owned()).unwrap();
+        assert_eq!(profile.name, "EVE_PCSmodbus通信协议V3.13 (BMS_V1.06)");
+        assert!(profile.registers.len() > 1000);
+        assert!(profile
+            .registers
+            .iter()
+            .any(|item| item.name == "总有功功率"));
     }
 }

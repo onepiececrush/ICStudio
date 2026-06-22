@@ -20,7 +20,7 @@ export type TransportListenConfig = {
 };
 
 export const defaultTransportListenConfig: TransportListenConfig = {
-  tcp: { ip: "0.0.0.0", port: 5020 },
+  tcp: { ip: "0.0.0.0", port: 502 },
   rtu: { serialPort: "COM3 / tty.usbserial", baudRate: 9600, slaveId: 1 },
   future: ["can", "custom-tcp"],
 };

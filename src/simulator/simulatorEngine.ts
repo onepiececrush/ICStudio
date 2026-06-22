@@ -30,6 +30,8 @@ export type FrameLog = {
   time: string;
   frame: string;
   note: string;
+  backendSequence?: number;
+  timestamp?: number;
 };
 
 

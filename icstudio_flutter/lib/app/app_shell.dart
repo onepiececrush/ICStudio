@@ -9,6 +9,7 @@ import 'package:icstudio_flutter/features/dashboard/dashboard_page.dart';
 import 'package:icstudio_flutter/features/monitor/realtime_monitor_page.dart';
 import 'package:icstudio_flutter/features/simulator/device_simulator_controller.dart';
 import 'package:icstudio_flutter/features/simulator/device_simulator_page.dart';
+import 'package:icstudio_flutter/features/simulator/global_frame_log_drawer.dart';
 import 'package:icstudio_flutter/features/simulator/simulator_quick_drawer.dart';
 import 'package:icstudio_flutter/src/rust/api/backend.dart';
 import 'package:icstudio_flutter/src/rust/api/connection.dart';
@@ -38,6 +39,7 @@ class _AppShellState extends State<AppShell> {
   Timer? _pollTimer;
   late final DeviceSimulatorController _deviceSimulatorController;
   bool _quickDrawerOpen = false;
+  bool _frameDrawerOpen = false;
 
   @override
   void initState() {
@@ -72,6 +74,9 @@ class _AppShellState extends State<AppShell> {
                   backendStatus: widget.backendStatus,
                   snapshot: _snapshot,
                   simulatorController: _deviceSimulatorController,
+                  onOpenFrameDrawer: () {
+                    setState(() => _frameDrawerOpen = true);
+                  },
                   onOpenQuickDrawer: () {
                     setState(() => _quickDrawerOpen = true);
                   },
@@ -145,6 +150,13 @@ class _AppShellState extends State<AppShell> {
                   : const SizedBox.shrink(key: ValueKey('quick-scrim-off')),
             ),
           ),
+          if (_frameDrawerOpen)
+            Positioned.fill(
+              child: GlobalFrameLogDrawer(
+                controller: _deviceSimulatorController,
+                onClose: () => setState(() => _frameDrawerOpen = false),
+              ),
+            ),
           Positioned(
             top: 60,
             right: 0,
@@ -303,12 +315,14 @@ class _TitleBar extends StatelessWidget {
     required this.backendStatus,
     required this.snapshot,
     required this.simulatorController,
+    required this.onOpenFrameDrawer,
     required this.onOpenQuickDrawer,
   });
 
   final BackendStatus backendStatus;
   final AppSnapshot snapshot;
   final DeviceSimulatorController simulatorController;
+  final VoidCallback onOpenFrameDrawer;
   final VoidCallback onOpenQuickDrawer;
 
   @override
@@ -403,28 +417,55 @@ class _TitleBar extends StatelessWidget {
               animation: simulatorController,
               builder: (context, _) {
                 final running = simulatorController.running;
+                final frameCount =
+                    simulatorController.status?.frames.length ?? 0;
                 return Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: OutlinedButton.icon(
-                    key: const Key('simulator-quick-open'),
-                    onPressed: onOpenQuickDrawer,
-                    icon: Icon(
-                      Icons.tune_rounded,
-                      size: 15,
-                      color: running ? AppColors.live : AppColors.primary,
-                    ),
-                    label: Text(
-                      '模拟快调 ${simulatorController.pinnedRegisterIds.length}',
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 34),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      side: BorderSide(
-                        color: running
-                            ? AppColors.live.withValues(alpha: 0.4)
-                            : AppColors.border,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      OutlinedButton.icon(
+                        key: const Key('global-frame-open'),
+                        onPressed: onOpenFrameDrawer,
+                        icon: Icon(
+                          Icons.cable_rounded,
+                          size: 15,
+                          color: running ? AppColors.live : AppColors.primary,
+                        ),
+                        label: Text('报文记录 $frameCount'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 34),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          side: BorderSide(
+                            color: running
+                                ? AppColors.live.withValues(alpha: 0.4)
+                                : AppColors.border,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        key: const Key('simulator-quick-open'),
+                        onPressed: onOpenQuickDrawer,
+                        icon: Icon(
+                          Icons.tune_rounded,
+                          size: 15,
+                          color: running ? AppColors.live : AppColors.primary,
+                        ),
+                        label: Text(
+                          '模拟快调 ${simulatorController.pinnedRegisterIds.length}',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 34),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          side: BorderSide(
+                            color: running
+                                ? AppColors.live.withValues(alpha: 0.4)
+                                : AppColors.border,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -763,7 +804,9 @@ class _NavTileState extends State<_NavTile> {
                   : null,
               color: selected
                   ? null
-                  : (_hovered ? AppColors.surface.withValues(alpha: 0.6) : null),
+                  : (_hovered
+                        ? AppColors.surface.withValues(alpha: 0.6)
+                        : null),
               borderRadius: BorderRadius.circular(9),
               border: Border.all(
                 color: selected

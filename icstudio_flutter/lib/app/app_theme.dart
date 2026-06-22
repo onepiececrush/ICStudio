@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// 专属字体族。
-/// - [kFontSans] Sora：界面与标题，几何 + 轻微技术感，区别于 Inter/Roboto 等通用体。
-/// - [kFontMono] JetBrains Mono：所有数值读数/地址/功能码，等宽 + 表格数字，营造仪表盘读数质感。
-const String kFontSans = 'Sora';
-const String kFontMono = 'JetBrains Mono';
+/// Windows 本地字体族。
+/// - [kFontSans] 使用系统 UI 字体，保证中文小字号清晰。
+/// - [kFontMono] 使用 Windows 等宽字体，保证地址/功能码对齐。
+const String kFontSans = 'Microsoft YaHei UI';
+const String kFontMono = 'Consolas';
 
 /// ICStudio「精密仪表」深色配色。
 ///
@@ -35,8 +35,8 @@ abstract final class AppColors {
 
   // 文本
   static const text = Color(0xFFEAF4F8);
-  static const textMuted = Color(0xFF92A9BB);
-  static const textFaint = Color(0xFF5C7488);
+  static const textMuted = Color(0xFFA9BBC9);
+  static const textFaint = Color(0xFF7890A3);
 
   /// 画布主渐变（左上偏亮、右下沉入近黑），叠加蓝图网格后形成纵深。
   static const canvasGradient = LinearGradient(
@@ -51,7 +51,7 @@ TextStyle monoStyle({
   double fontSize = 13,
   FontWeight fontWeight = FontWeight.w500,
   Color color = AppColors.text,
-  double letterSpacing = 0.2,
+  double letterSpacing = 0,
   double? height,
 }) {
   return TextStyle(
@@ -96,19 +96,19 @@ ThemeData buildAppTheme() {
         fontSize: 26,
         height: 1.1,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.6,
+        letterSpacing: 0,
       ),
       titleLarge: TextStyle(
         color: AppColors.text,
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.2,
+        letterSpacing: 0,
       ),
       titleMedium: TextStyle(
         color: AppColors.text,
         fontSize: 13.5,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.1,
+        letterSpacing: 0,
       ),
       bodyLarge: TextStyle(color: AppColors.text, fontSize: 14),
       bodyMedium: TextStyle(color: AppColors.text, fontSize: 13),
@@ -124,7 +124,7 @@ ThemeData buildAppTheme() {
         color: AppColors.primary,
         fontSize: 11,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.6,
+        letterSpacing: 0,
       ),
       border: outlineBorder,
       enabledBorder: outlineBorder,
@@ -143,7 +143,7 @@ ThemeData buildAppTheme() {
           fontFamily: kFontSans,
           fontSize: 12.5,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
+          letterSpacing: 0,
         ),
       ),
     ),
@@ -158,7 +158,7 @@ ThemeData buildAppTheme() {
           fontFamily: kFontSans,
           fontSize: 12.5,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.2,
+          letterSpacing: 0,
         ),
       ),
     ),
@@ -167,7 +167,7 @@ ThemeData buildAppTheme() {
         color: AppColors.textMuted,
         fontSize: 10.5,
         fontWeight: FontWeight.w700,
-        letterSpacing: 0.8,
+        letterSpacing: 0,
       ),
       dataTextStyle: TextStyle(color: AppColors.text, fontSize: 12.5),
       headingRowHeight: 40,

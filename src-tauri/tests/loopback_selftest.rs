@@ -38,6 +38,19 @@ fn built_in_slave_serves_register_14001_over_real_modbus_tcp() {
             .any(|entry| entry.contains("FC03 读寄存器 address=14001 quantity=1")),
         "logs: {logs:?}"
     );
+    let frame_logs = store.frame_logs();
+    assert!(
+        frame_logs.iter().any(|entry| {
+            entry.direction == "request" && entry.frame.contains("00 00 00 06 01 03 36 B1 00 01")
+        }),
+        "frame logs: {frame_logs:?}"
+    );
+    assert!(
+        frame_logs.iter().any(|entry| {
+            entry.direction == "response" && entry.frame.contains("00 00 00 05 01 03 02 00 0C")
+        }),
+        "frame logs: {frame_logs:?}"
+    );
     server.stop();
 }
 

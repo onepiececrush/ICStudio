@@ -68,8 +68,6 @@
   min-width: 16px;
 }
 
-.titlebar-command-center,
-.titlebar-actions,
 .window-controls,
 .glass-widget:not(.titlebar-drag-source),
 .quick-action,
@@ -79,6 +77,11 @@
 .nav-item,
 .search-box input {
   -webkit-app-region: no-drag;
+}
+
+.titlebar-command-center,
+.titlebar-actions {
+  -webkit-app-region: drag;
 }
 
 .titlebar-command-center {

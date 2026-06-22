@@ -1,5 +1,5 @@
 use crate::modbus::protocol;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
@@ -16,6 +16,7 @@ const DASHBOARD_ADDRESSES: &[u16] = &[
 const PCS_MODULE_COUNT: u16 = 16;
 const PCS_MODULE_BASE: u16 = 15001;
 const PCS_MODULE_STRIDE: u16 = 500;
+const FRAME_LOG_LIMIT: usize = 1000;
 
 #[derive(Clone, Debug)]
 enum RegisterValue {
@@ -179,12 +180,24 @@ pub struct SimulatorRegisterDefinition {
     pub current_value: f64,
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SimulatorFrameLog {
+    pub sequence: u64,
+    pub timestamp: i64,
+    pub direction: String,
+    pub frame: String,
+    pub note: String,
+}
+
 #[derive(Clone, Debug)]
 pub struct SimulatedRegisterStore {
     // store 保存工程值，Modbus 读写时再按点位 scale/data_type 编解码成原始寄存器。
     registers: Arc<Mutex<HashMap<u16, RegisterPoint>>>,
     dynamic_bases: Arc<Mutex<HashMap<u16, f64>>>,
     logs: Arc<Mutex<Vec<String>>>,
+    frame_logs: Arc<Mutex<Vec<SimulatorFrameLog>>>,
+    frame_sequence: Arc<Mutex<u64>>,
 }
 
 impl SimulatedRegisterStore {
@@ -193,6 +206,8 @@ impl SimulatedRegisterStore {
             registers: Arc::new(Mutex::new(HashMap::new())),
             dynamic_bases: Arc::new(Mutex::new(HashMap::new())),
             logs: Arc::new(Mutex::new(Vec::new())),
+            frame_logs: Arc::new(Mutex::new(Vec::new())),
+            frame_sequence: Arc::new(Mutex::new(0)),
         }
     }
 
@@ -238,6 +253,22 @@ impl SimulatedRegisterStore {
             bases.insert(address, value);
         }
         self.log(format!("修改模拟值 {address} {}={value}", point.name));
+        Ok(())
+    }
+
+    pub(crate) fn set_number_from_frontend_write(
+        &self,
+        address: u16,
+        value: f64,
+        unit_id: u8,
+    ) -> Result<(), String> {
+        self.set_number(address, value)?;
+        let raw_words = self.raw_words_for_point(address)?;
+        if raw_words.len() == 1 {
+            self.log_frontend_fc06_write(unit_id, address, raw_words[0]);
+        } else {
+            self.log_frontend_fc10_write(unit_id, address, &raw_words);
+        }
         Ok(())
     }
 
@@ -300,6 +331,43 @@ impl SimulatedRegisterStore {
         Ok(())
     }
 
+    fn raw_words_for_point(&self, address: u16) -> Result<Vec<u16>, String> {
+        let point = self
+            .point(address)
+            .ok_or_else(|| format!("寄存器 {address} 不存在"))?;
+        let words = encode_engineering_value_to_raw(&point);
+        Ok(if words.is_empty() { vec![0] } else { words })
+    }
+
+    fn log_frontend_fc06_write(&self, unit_id: u8, address: u16, raw: u16) {
+        let frame = frontend_fc06_frame(unit_id, address, raw);
+        self.log_frame(
+            "request",
+            &frame,
+            format!("app=frontend Unit={unit_id} FC06 写单寄存器 address={address} raw={raw}"),
+        );
+        self.log_frame(
+            "response",
+            &frame,
+            format!("app=frontend Unit={unit_id} FC06 写单回显 address={address} raw={raw}"),
+        );
+    }
+
+    fn log_frontend_fc10_write(&self, unit_id: u8, address: u16, raw_words: &[u16]) {
+        let request = frontend_fc10_request_frame(unit_id, address, raw_words);
+        let response = frontend_fc10_response_frame(unit_id, address, raw_words.len() as u16);
+        self.log_frame(
+            "request",
+            &request,
+            format!("app=frontend Unit={unit_id} FC10/FC16 写多个寄存器 address={address} quantity={}", raw_words.len()),
+        );
+        self.log_frame(
+            "response",
+            &response,
+            format!("app=frontend Unit={unit_id} FC10/FC16 写多个回执 address={address} quantity={}", raw_words.len()),
+        );
+    }
+
     pub(crate) fn log(&self, message: String) {
         let ts = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -315,6 +383,33 @@ impl SimulatedRegisterStore {
 
     pub fn logs(&self) -> Vec<String> {
         self.logs.lock().expect("log store poisoned").clone()
+    }
+
+    pub fn frame_logs(&self) -> Vec<SimulatorFrameLog> {
+        self.frame_logs
+            .lock()
+            .expect("frame log store poisoned")
+            .clone()
+    }
+
+    fn log_frame(&self, direction: &str, frame: &[u8], note: String) {
+        let sequence = {
+            let mut next = self.frame_sequence.lock().expect("frame sequence poisoned");
+            *next += 1;
+            *next
+        };
+        let mut logs = self.frame_logs.lock().expect("frame log store poisoned");
+        logs.insert(
+            0,
+            SimulatorFrameLog {
+                sequence,
+                timestamp: unix_millis(),
+                direction: direction.to_string(),
+                frame: bytes_to_hex(frame),
+                note,
+            },
+        );
+        logs.truncate(FRAME_LOG_LIMIT);
     }
 
     pub(crate) fn refresh_dynamic_values(&self) -> Result<(), String> {
@@ -624,6 +719,12 @@ fn handle_modbus_connection(
             store.log(format!("主站连接关闭：{peer_addr}，读取 PDU 失败：{error}"));
             return;
         }
+        let request_frame = modbus_tcp_frame(&header, &pdu);
+        store.log_frame(
+            "request",
+            &request_frame,
+            describe_modbus_request(&peer_addr, request_unit, &pdu),
+        );
         if request_unit != unit_id {
             store.log(format!(
                 "忽略 Unit ID 不匹配请求：peer={peer_addr} request={request_unit} expected={unit_id}"
@@ -642,6 +743,134 @@ fn handle_modbus_connection(
             store.log(format!("主站连接关闭：{peer_addr}，写响应失败：{error}"));
             return;
         }
+        store.log_frame(
+            "response",
+            &response,
+            describe_modbus_response(&peer_addr, unit_id, &response[7..]),
+        );
+    }
+}
+
+fn modbus_tcp_frame(header: &[u8; 7], pdu: &[u8]) -> Vec<u8> {
+    let mut frame = Vec::with_capacity(header.len() + pdu.len());
+    frame.extend_from_slice(header);
+    frame.extend_from_slice(pdu);
+    frame
+}
+
+fn frontend_fc06_frame(unit_id: u8, address: u16, raw: u16) -> Vec<u8> {
+    vec![
+        0x00,
+        0x06,
+        0x00,
+        0x00,
+        0x00,
+        0x06,
+        unit_id,
+        0x06,
+        (address >> 8) as u8,
+        (address & 0xff) as u8,
+        (raw >> 8) as u8,
+        (raw & 0xff) as u8,
+    ]
+}
+
+fn frontend_fc10_request_frame(unit_id: u8, address: u16, raw_words: &[u16]) -> Vec<u8> {
+    let quantity = raw_words.len() as u16;
+    let byte_count = (quantity * 2) as u8;
+    let mut frame = frontend_write_header(0x10, unit_id, 7 + quantity * 2);
+    frame.extend_from_slice(&[
+        0x10,
+        (address >> 8) as u8,
+        (address & 0xff) as u8,
+        (quantity >> 8) as u8,
+        (quantity & 0xff) as u8,
+        byte_count,
+    ]);
+    for word in raw_words {
+        frame.extend_from_slice(&word.to_be_bytes());
+    }
+    frame
+}
+
+fn frontend_fc10_response_frame(unit_id: u8, address: u16, quantity: u16) -> Vec<u8> {
+    let mut frame = frontend_write_header(0x10, unit_id, 6);
+    frame.extend_from_slice(&[
+        0x10,
+        (address >> 8) as u8,
+        (address & 0xff) as u8,
+        (quantity >> 8) as u8,
+        (quantity & 0xff) as u8,
+    ]);
+    frame
+}
+
+fn frontend_write_header(transaction_id: u16, unit_id: u8, length: u16) -> Vec<u8> {
+    let mut frame = Vec::with_capacity(12);
+    frame.extend_from_slice(&transaction_id.to_be_bytes());
+    frame.extend_from_slice(&0u16.to_be_bytes());
+    frame.extend_from_slice(&length.to_be_bytes());
+    frame.push(unit_id);
+    frame
+}
+
+fn describe_modbus_request(peer_addr: &str, unit_id: u8, pdu: &[u8]) -> String {
+    let Some(function) = pdu.first().copied() else {
+        return format!("peer={peer_addr} Unit={unit_id} 空请求 PDU");
+    };
+    match function {
+        3 | 4 if pdu.len() >= 5 => {
+            let address = u16::from_be_bytes([pdu[1], pdu[2]]);
+            let quantity = u16::from_be_bytes([pdu[3], pdu[4]]);
+            format!("peer={peer_addr} Unit={unit_id} FC{function:02} 读寄存器 address={address} quantity={quantity}")
+        }
+        6 if pdu.len() >= 5 => {
+            let address = u16::from_be_bytes([pdu[1], pdu[2]]);
+            let raw = u16::from_be_bytes([pdu[3], pdu[4]]);
+            format!("peer={peer_addr} Unit={unit_id} FC06 写单寄存器 address={address} raw={raw}")
+        }
+        16 if pdu.len() >= 6 => {
+            let address = u16::from_be_bytes([pdu[1], pdu[2]]);
+            let quantity = u16::from_be_bytes([pdu[3], pdu[4]]);
+            format!("peer={peer_addr} Unit={unit_id} FC16 写多个寄存器 address={address} quantity={quantity}")
+        }
+        _ => format!(
+            "peer={peer_addr} Unit={unit_id} FC{function:02} 请求 length={}",
+            pdu.len()
+        ),
+    }
+}
+
+fn describe_modbus_response(peer_addr: &str, unit_id: u8, pdu: &[u8]) -> String {
+    let Some(function) = pdu.first().copied() else {
+        return format!("peer={peer_addr} Unit={unit_id} 空响应 PDU");
+    };
+    if function & 0x80 != 0 {
+        return format!(
+            "peer={peer_addr} Unit={unit_id} FC{:02} 异常响应 code={}",
+            function & 0x7f,
+            pdu.get(1).copied().unwrap_or_default()
+        );
+    }
+    match function {
+        3 | 4 if pdu.len() >= 2 => format!(
+            "peer={peer_addr} Unit={unit_id} FC{function:02} 响应 {} 个寄存器",
+            (pdu[1] as usize) / 2
+        ),
+        6 if pdu.len() >= 5 => {
+            let address = u16::from_be_bytes([pdu[1], pdu[2]]);
+            let raw = u16::from_be_bytes([pdu[3], pdu[4]]);
+            format!("peer={peer_addr} Unit={unit_id} FC06 写单回显 address={address} raw={raw}")
+        }
+        16 if pdu.len() >= 5 => {
+            let address = u16::from_be_bytes([pdu[1], pdu[2]]);
+            let quantity = u16::from_be_bytes([pdu[3], pdu[4]]);
+            format!("peer={peer_addr} Unit={unit_id} FC16 写多个回执 address={address} quantity={quantity}")
+        }
+        _ => format!(
+            "peer={peer_addr} Unit={unit_id} FC{function:02} 响应 length={}",
+            pdu.len()
+        ),
     }
 }
 
@@ -756,6 +985,21 @@ fn format_number(value: f64, precision: usize) -> String {
         3 => format!("{value:.3}"),
         _ => format!("{value:.4}"),
     }
+}
+
+fn unix_millis() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or_default()
+}
+
+fn bytes_to_hex(bytes: &[u8]) -> String {
+    bytes
+        .iter()
+        .map(|byte| format!("{byte:02X}"))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn infer_precision(scale: f64) -> usize {
@@ -937,5 +1181,59 @@ mod tests {
 
         assert_eq!(store.raw(1000), 42);
         assert_eq!(store.raw(1001), 0);
+    }
+
+    #[test]
+    fn frontend_runtime_write_records_fc06_request_and_response_frames() {
+        let store = create_loopback_store();
+
+        store
+            .set_number_from_frontend_write(14006, 1500.0, 1)
+            .expect("frontend write succeeds");
+
+        let frame_logs = store.frame_logs();
+        assert!(
+            frame_logs
+                .iter()
+                .any(|entry| entry.direction == "request"
+                    && entry.frame.contains("00 06 01 06 36 B6 3A 98")
+                    && entry.note.contains("FC06 写单寄存器")),
+            "frame logs: {frame_logs:?}"
+        );
+        assert!(
+            frame_logs
+                .iter()
+                .any(|entry| entry.direction == "response"
+                    && entry.frame.contains("00 06 01 06 36 B6 3A 98")
+                    && entry.note.contains("FC06 写单回显")),
+            "frame logs: {frame_logs:?}"
+        );
+    }
+
+    #[test]
+    fn frontend_runtime_multi_word_write_records_fc10_request_and_response_frames() {
+        let store = create_loopback_store();
+
+        store
+            .set_number_from_frontend_write(14037, 256800.2, 1)
+            .expect("frontend multi-word write succeeds");
+
+        let frame_logs = store.frame_logs();
+        assert!(
+            frame_logs
+                .iter()
+                .any(|entry| entry.direction == "request"
+                    && entry.frame.contains("01 10 36 D5 00 02 04")
+                    && entry.note.contains("FC10/FC16 写多个寄存器")),
+            "frame logs: {frame_logs:?}"
+        );
+        assert!(
+            frame_logs
+                .iter()
+                .any(|entry| entry.direction == "response"
+                    && entry.frame.contains("01 10 36 D5 00 02")
+                    && entry.note.contains("FC10/FC16 写多个回执")),
+            "frame logs: {frame_logs:?}"
+        );
     }
 }

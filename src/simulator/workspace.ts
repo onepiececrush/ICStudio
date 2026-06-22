@@ -27,11 +27,20 @@ export type SimulatorRegisterCommitSource =
   | "quick-drawer"
   | "scenario";
 
+export type SimulatorServerFrameLog = {
+  sequence: number;
+  timestamp: number;
+  direction: "request" | "response";
+  frame: string;
+  note: string;
+};
+
 export type SimulatorServerStatus = {
   running: boolean;
   endpoint: string;
   unitId: number;
   logs: string[];
+  frameLogs: SimulatorServerFrameLog[];
 };
 
 export type SimulatorWorkspaceState = {
@@ -75,6 +84,7 @@ export function createDefaultSimulatorWorkspaceState(): SimulatorWorkspaceState 
       endpoint: `${defaultTransportListenConfig.tcp.ip}:${defaultTransportListenConfig.tcp.port}`,
       unitId: defaultTransportListenConfig.rtu.slaveId,
       logs: [],
+      frameLogs: [],
     },
     frameLogs: [],
     backendLogs: [],

@@ -1,7 +1,9 @@
 @import "./styles/base.css";
 @import "./styles/shell.css";
+@import "./styles/global-frame.css";
 @import "./styles/dashboard.css";
 @import "./styles/modules.css";
 @import "./styles/scada.css";
 
 @import "./styles/point-inspector.css";
+@import "./styles/performance.css";
