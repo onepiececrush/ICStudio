@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:icstudio_flutter/app/app_design.dart';
 import 'package:icstudio_flutter/app/app_theme.dart';
@@ -11,11 +12,13 @@ class GlobalFrameLogDrawer extends StatefulWidget {
   const GlobalFrameLogDrawer({
     required this.controller,
     required this.onClose,
+    this.isStandalone = false,
     super.key,
   });
 
   final DeviceSimulatorController controller;
   final VoidCallback onClose;
+  final bool isStandalone;
 
   @override
   State<GlobalFrameLogDrawer> createState() => _GlobalFrameLogDrawerState();
@@ -50,6 +53,24 @@ class _GlobalFrameLogDrawerState extends State<GlobalFrameLogDrawer> {
     final bounds = _bounds(constraints);
     final grouped = groupGlobalFrameLogViews(_sourceFrames(), _query);
     final selected = grouped.all.where((item) => item.id == _selectedId);
+
+    if (widget.isStandalone) {
+      return _DrawerPanel(
+        grouped: grouped,
+        selected: selected.firstOrNull,
+        query: _query,
+        frozen: _frozen,
+        liveCount: widget.controller.status?.frames.length ?? 0,
+        onClose: widget.onClose,
+        onDrag: (_) {},
+        onResize: (_) {},
+        onFreeze: _toggleFrozen,
+        onQuery: (value) => setState(() => _query = value),
+        onSelect: (id) => setState(() => _selectedId = id),
+        isStandalone: true,
+      );
+    }
+
     return Stack(
       children: [
         Positioned(

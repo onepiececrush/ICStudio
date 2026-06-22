@@ -92,25 +92,39 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary.withValues(alpha: 0.22),
-                AppColors.primary.withValues(alpha: 0.05),
-              ],
+        FlowingBorderDecoration(
+          running: controller.running,
+          color: AppColors.success,
+          radius: 12,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  (controller.running ? AppColors.success : AppColors.primary)
+                      .withValues(alpha: 0.22),
+                  (controller.running ? AppColors.success : AppColors.primary)
+                      .withValues(alpha: 0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: (controller.running ? AppColors.success : AppColors.primary)
+                    .withValues(alpha: 0.3),
+              ),
+              boxShadow: AppDecor.glow(
+                controller.running ? AppColors.success : AppColors.primary,
+                blur: 14,
+                opacity: 0.3,
+              ),
             ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-            boxShadow: AppDecor.glow(AppColors.primary, blur: 14, opacity: 0.3),
-          ),
-          child: const Icon(
-            Icons.developer_board_rounded,
-            color: AppColors.primary,
+            child: Icon(
+              Icons.developer_board_rounded,
+              color: controller.running ? AppColors.success : AppColors.primary,
+            ),
           ),
         ),
         const SizedBox(width: 13),
@@ -150,28 +164,45 @@ class _Header extends StatelessWidget {
           label: const Text('停止'),
         ),
         const SizedBox(width: 8),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(9),
-            boxShadow: controller.busy || controller.running
-                ? null
-                : AppDecor.glow(AppColors.primary, blur: 16, opacity: 0.4),
-          ),
-          child: FilledButton.icon(
-            key: const Key('simulator-start'),
-            onPressed: controller.busy || controller.running
-                ? null
-                : () => unawaited(controller.start()),
-            icon: controller.busy
-                ? const SizedBox.square(
-                    dimension: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF021A1E),
+        FlowingBorderDecoration(
+          running: controller.running,
+          color: AppColors.success,
+          radius: 9,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(9),
+              boxShadow: controller.busy || controller.running
+                  ? null
+                  : AppDecor.glow(AppColors.primary, blur: 16, opacity: 0.4),
+            ),
+            child: FilledButton.icon(
+              key: const Key('simulator-start'),
+              onPressed: controller.busy || controller.running
+                  ? null
+                  : () => unawaited(controller.start()),
+              style: controller.running
+                  ? FilledButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: const Color(0xFF021E14),
+                    )
+                  : null,
+              icon: controller.busy
+                  ? const SizedBox.square(
+                      dimension: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF021A1E),
+                      ),
+                    )
+                  : Icon(
+                      controller.running
+                          ? Icons.check_circle_outline_rounded
+                          : Icons.play_arrow_rounded,
+                      size: 18,
                     ),
-                  )
-                : const Icon(Icons.play_arrow_rounded, size: 18),
-            label: Text(controller.running ? '运行中' : '启动从机'),
+              label: Text(controller.running ? '运行中' : '启动从机'),
+            ),
           ),
         ),
       ],
@@ -200,35 +231,112 @@ class _ProfileStrip extends StatelessWidget {
           itemBuilder: (context, index) {
             final profile = controller.profiles[index];
             final selected = profile.id == controller.selectedProfileId;
-            return InkWell(
-              onTap: controller.running
-                  ? null
-                  : () => controller.selectProfile(profile.id),
-              borderRadius: BorderRadius.circular(9),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: 240,
-                padding: const EdgeInsets.all(11),
-                decoration: BoxDecoration(
-                  gradient: selected
-                      ? LinearGradient(
-                          colors: [
-                            AppColors.primary.withValues(alpha: 0.18),
-                            AppColors.primary.withValues(alpha: 0.03),
-                          ],
+            return _ProfileCard(
+              profile: profile,
+              selected: selected,
+              running: controller.running,
+              onTap: () => controller.selectProfile(profile.id),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileCard extends StatefulWidget {
+  const _ProfileCard({
+    required this.profile,
+    required this.selected,
+    required this.running,
+    required this.onTap,
+  });
+
+  final SimulatorProfile profile;
+  final bool selected;
+  final bool running;
+  final VoidCallback onTap;
+
+  @override
+  State<_ProfileCard> createState() => _ProfileCardState();
+}
+
+class _ProfileCardState extends State<_ProfileCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = widget.profile;
+    final selected = widget.selected;
+    final running = widget.running;
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: InkWell(
+        onTap: running ? null : widget.onTap,
+        borderRadius: BorderRadius.circular(9),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          width: 240,
+          transform: Matrix4.translationValues(0, _hovered && !running ? -3 : 0, 0),
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.18),
+                      AppColors.primary.withValues(alpha: 0.03),
+                    ],
+                  )
+                : _hovered
+                    ? const LinearGradient(
+                        colors: [
+                          AppColors.surfaceRaised,
+                          AppColors.surfaceSoft,
+                        ],
+                      )
+                    : null,
+            color: selected ? null : AppColors.canvas,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? AppColors.primary.withValues(alpha: 0.6)
+                  : _hovered
+                      ? AppColors.border
+                      : AppColors.borderSoft,
+            ),
+            boxShadow: selected
+                ? AppDecor.glow(AppColors.primary, blur: 14, opacity: 0.25)
+                : _hovered
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x30000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                         )
-                      : null,
-                  color: selected ? null : AppColors.canvas,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: selected
-                        ? AppColors.primary.withValues(alpha: 0.5)
-                        : AppColors.borderSoft,
+                      ]
+                    : null,
+          ),
+          child: Stack(
+            children: [
+              if (selected)
+                Positioned(
+                  left: 0,
+                  top: 4,
+                  bottom: 4,
+                  child: Container(
+                    width: 3.5,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: AppDecor.glow(AppColors.primary, blur: 6, opacity: 0.8),
+                    ),
                   ),
-                  boxShadow: selected
-                      ? AppDecor.glow(AppColors.primary, blur: 14, opacity: 0.25)
-                      : null,
                 ),
+              Padding(
+                padding: EdgeInsets.only(left: selected ? 8.0 : 0.0),
                 child: Row(
                   children: [
                     Icon(
@@ -236,7 +344,11 @@ class _ProfileStrip extends StatelessWidget {
                           ? Icons.lan_outlined
                           : Icons.usb_outlined,
                       size: 20,
-                      color: selected ? AppColors.primary : AppColors.textMuted,
+                      color: selected
+                          ? AppColors.primary
+                          : _hovered
+                              ? AppColors.text
+                              : AppColors.textMuted,
                     ),
                     const SizedBox(width: 9),
                     Expanded(
@@ -259,7 +371,7 @@ class _ProfileStrip extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: monoStyle(
-                              color: AppColors.textMuted,
+                              color: selected ? AppColors.textMuted : AppColors.textFaint,
                               fontSize: 9.5,
                             ),
                           ),
@@ -269,8 +381,8 @@ class _ProfileStrip extends StatelessWidget {
                   ],
                 ),
               ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );
@@ -542,46 +654,10 @@ class _RegisterPanel extends StatelessWidget {
                             ),
                           ),
                           DataCell(
-                            InkWell(
-                              key: Key('simulator-register-${register.id}'),
-                              onTap: () =>
-                                  _editRegister(context, controller, register),
-                              child: Container(
-                                constraints: const BoxConstraints(minWidth: 92),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  borderRadius: BorderRadius.circular(7),
-                                  border: Border.all(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '${_number(register.value)} ${register.unit}',
-                                      style: monoStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    const Icon(
-                                      Icons.edit_outlined,
-                                      size: 13,
-                                      color: AppColors.primary,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            _RegisterValueCell(
+                              register: register,
+                              controller: controller,
+                              lastModified: controller.lastModified[register.id],
                             ),
                           ),
                           DataCell(
@@ -1040,11 +1116,52 @@ class _Badge extends StatelessWidget {
   );
 }
 
-class _Stat extends StatelessWidget {
+class _Stat extends StatefulWidget {
   const _Stat({required this.label, required this.value, required this.color});
   final String label;
   final int value;
   final Color color;
+
+  @override
+  State<_Stat> createState() => _StatState();
+}
+
+class _StatState extends State<_Stat> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 320),
+      vsync: this,
+    );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.25).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.25, end: 1.0).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 50,
+      ),
+    ]).animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(covariant _Stat oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => Container(
@@ -1054,22 +1171,25 @@ class _Stat extends StatelessWidget {
       gradient: LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [color.withValues(alpha: 0.12), color.withValues(alpha: 0.03)],
+        colors: [widget.color.withValues(alpha: 0.12), widget.color.withValues(alpha: 0.03)],
       ),
       borderRadius: BorderRadius.circular(9),
-      border: Border.all(color: color.withValues(alpha: 0.2)),
+      border: Border.all(color: widget.color.withValues(alpha: 0.2)),
     ),
     child: Row(
       children: [
         Expanded(
           child: Text(
-            label,
+            widget.label,
             style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
           ),
         ),
-        Text(
-          '$value',
-          style: monoStyle(color: color, fontWeight: FontWeight.w700, fontSize: 14),
+        ScaleTransition(
+          scale: _scaleAnimation,
+          child: Text(
+            '${widget.value}',
+            style: monoStyle(color: widget.color, fontWeight: FontWeight.w700, fontSize: 14),
+          ),
         ),
       ],
     ),
@@ -1158,3 +1278,105 @@ String _faultLabel(String value) => switch (value) {
   'outOfRange' => '越界',
   _ => '无',
 };
+
+class _RegisterValueCell extends StatefulWidget {
+  const _RegisterValueCell({
+    required this.register,
+    required this.controller,
+    required this.lastModified,
+  });
+
+  final SimulatorRegister register;
+  final DeviceSimulatorController controller;
+  final String? lastModified;
+
+  @override
+  State<_RegisterValueCell> createState() => _RegisterValueCellState();
+}
+
+class _RegisterValueCellState extends State<_RegisterValueCell>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<Color?> _colorAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 700),
+      vsync: this,
+    );
+    _colorAnimation = ColorTween(
+      begin: AppColors.primary.withValues(alpha: 0.5),
+      end: AppColors.primary.withValues(alpha: 0.08),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant _RegisterValueCell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.lastModified != oldWidget.lastModified && widget.lastModified != null) {
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final register = widget.register;
+    final valueContent = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${_number(register.value)} ${register.unit}',
+          style: monoStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 6),
+        const Icon(
+          Icons.edit_outlined,
+          size: 13,
+          color: AppColors.primary,
+        ),
+      ],
+    );
+
+    return InkWell(
+      key: Key('simulator-register-${register.id}'),
+      onTap: () => _editRegister(context, widget.controller, register),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final color = _controller.isAnimating 
+              ? _colorAnimation.value 
+              : AppColors.primary.withValues(alpha: 0.08);
+
+          return Container(
+            constraints: const BoxConstraints(minWidth: 92),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(
+                color: _controller.isAnimating
+                    ? AppColors.primary.withValues(alpha: 0.55)
+                    : AppColors.primary.withValues(alpha: 0.25),
+              ),
+            ),
+            child: valueContent,
+          );
+        },
+      ),
+    );
+  }
+}

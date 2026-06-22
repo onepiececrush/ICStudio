@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:icstudio_flutter/app/app_theme.dart';
 
@@ -66,39 +67,76 @@ abstract final class AppDecor {
 }
 
 /// 画布蓝图网格 + 顶部辉光底纹。极低透明度，只为营造纵深，不抢内容。
-class BlueprintBackground extends StatelessWidget {
+/// 画布蓝图网格 + 顶部辉光底纹。通过极慢网格滑动及环境光呼吸增加背景活性。
+class BlueprintBackground extends StatefulWidget {
   const BlueprintBackground({required this.child, super.key});
 
   final Widget child;
 
   @override
+  State<BlueprintBackground> createState() => _BlueprintBackgroundState();
+}
+
+class _BlueprintBackgroundState extends State<BlueprintBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 80),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(gradient: AppColors.canvasGradient),
-      child: CustomPaint(
-        painter: _BlueprintPainter(),
-        isComplex: true,
-        willChange: false,
-        child: child,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: _BlueprintPainter(animationValue: _controller.value),
+            isComplex: true,
+            willChange: true,
+            child: child,
+          );
+        },
+        child: widget.child,
       ),
     );
   }
 }
 
 class _BlueprintPainter extends CustomPainter {
-  const _BlueprintPainter();
+  const _BlueprintPainter({required this.animationValue});
+
+  final double animationValue;
 
   @override
   void paint(Canvas canvas, Size size) {
     const step = 32.0;
+    // 极慢的漂移：网格沿 x, y 移动
+    final offset = step * animationValue;
+
     final minor = Paint()
       ..color = const Color(0x06FFFFFF)
       ..strokeWidth = 1;
     final major = Paint()
-      ..color = const Color(0x0E34E2E8)
+      ..color = const Color(0x0C34E2E8)
       ..strokeWidth = 1;
+
     var i = 0;
-    for (double x = 0; x <= size.width; x += step, i++) {
+    for (double x = offset - step; x <= size.width + step; x += step, i++) {
+      if (x < 0) continue;
       canvas.drawLine(
         Offset(x, 0),
         Offset(x, size.height),
@@ -106,32 +144,38 @@ class _BlueprintPainter extends CustomPainter {
       );
     }
     i = 0;
-    for (double y = 0; y <= size.height; y += step, i++) {
+    for (double y = offset - step; y <= size.height + step; y += step, i++) {
+      if (y < 0) continue;
       canvas.drawLine(
         Offset(0, y),
         Offset(size.width, y),
         i % 4 == 0 ? major : minor,
       );
     }
-    // 左上角辉光，模拟控制台环境光
+
+    // 左上角辉光增加微妙的 12 秒周期正弦呼吸，模拟控制台环境光
+    final wave = math.sin(animationValue * math.pi * 2 * 6.66);
+    final glowScale = 0.95 + 0.05 * wave;
+
     final glow = Paint()
-      ..shader =
-          RadialGradient(
-            colors: [
-              AppColors.primary.withValues(alpha: 0.05),
-              Colors.transparent,
-            ],
-          ).createShader(
-            Rect.fromCircle(
-              center: const Offset(0, 0),
-              radius: size.width * 0.5,
-            ),
-          );
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.primary.withValues(alpha: 0.05 * glowScale),
+          Colors.transparent,
+        ],
+      ).createShader(
+        Rect.fromCircle(
+          center: const Offset(0, 0),
+          radius: size.width * 0.55 * glowScale,
+        ),
+      );
     canvas.drawRect(Offset.zero & size, glow);
   }
 
   @override
-  bool shouldRepaint(covariant _BlueprintPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _BlueprintPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
+  }
 }
 
 /// 一次性入场动效：淡入 + 上浮。通过 [order] 错开时长形成级联效果。
@@ -162,8 +206,8 @@ class RevealOnce extends StatelessWidget {
   }
 }
 
-/// 状态指示点（可发光）。
-class StatusDot extends StatelessWidget {
+/// 状态指示点（支持呼吸脉冲晕染）。
+class StatusDot extends StatefulWidget {
   const StatusDot({
     required this.color,
     this.size = 8,
@@ -176,14 +220,89 @@ class StatusDot extends StatelessWidget {
   final bool glow;
 
   @override
+  State<StatusDot> createState() => _StatusDotState();
+}
+
+class _StatusDotState extends State<StatusDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    if (widget.glow) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant StatusDot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.glow != oldWidget.glow) {
+      if (widget.glow) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: glow ? AppDecor.glow(color, blur: 8, opacity: 0.7) : null,
+    if (!widget.glow) {
+      return Container(
+        width: widget.size,
+        height: widget.size,
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final pulseValue = _controller.value;
+          final outerOpacity = (1.0 - pulseValue) * 0.45;
+          final outerSize = widget.size + (widget.size * 1.6 * pulseValue);
+
+          return Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: outerSize,
+                height: outerSize,
+                decoration: BoxDecoration(
+                  color: widget.color.withValues(alpha: outerOpacity),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Container(
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  shape: BoxShape.circle,
+                  boxShadow: AppDecor.glow(widget.color, blur: 8, opacity: 0.7),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -218,50 +337,370 @@ class Kicker extends StatelessWidget {
   }
 }
 
-/// 细量程轨道：[fraction] 为 null 时显示空闲基线（未连接），否则按比例填充。
-class ValueTrack extends StatelessWidget {
+/// 细量程轨道：[fraction] 为 null 时显示空闲基线，否则按比例填充并附带斜纹流动光效。
+class ValueTrack extends StatefulWidget {
   const ValueTrack({required this.color, this.fraction, super.key});
 
   final Color color;
   final double? fraction;
 
   @override
+  State<ValueTrack> createState() => _ValueTrackState();
+}
+
+class _ValueTrackState extends State<ValueTrack> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1600),
+      vsync: this,
+    );
+    if (widget.fraction != null) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ValueTrack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((widget.fraction != null) != (oldWidget.fraction != null)) {
+      if (widget.fraction != null) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final f = fraction;
+    final f = widget.fraction;
+    if (f == null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(3),
+        child: SizedBox(
+          height: 4,
+          child: Stack(
+            children: [
+              Container(height: 4, color: AppColors.canvas),
+              Row(
+                children: List.generate(
+                  24,
+                  (i) => Expanded(
+                    child: Container(
+                      height: 4,
+                      margin: const EdgeInsets.only(right: 2),
+                      color: i.isEven ? AppColors.borderSoft : Colors.transparent,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
-      child: Stack(
-        children: [
-          Container(height: 4, color: AppColors.canvas),
-          if (f != null)
-            FractionallySizedBox(
-              widthFactor: f.clamp(0.02, 1.0),
-              child: Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color.withValues(alpha: 0.55), color],
-                  ),
-                  boxShadow: AppDecor.glow(color, blur: 6, opacity: 0.5),
-                ),
+      child: SizedBox(
+        height: 4,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: _ValueTrackPainter(
+                color: widget.color,
+                fraction: f,
+                animationValue: _controller.value,
               ),
-            )
-          else
-            // 空闲态：等距刻度，呈现「待机仪表」观感
-            Row(
-              children: List.generate(
-                24,
-                (i) => Expanded(
-                  child: Container(
-                    height: 4,
-                    margin: const EdgeInsets.only(right: 2),
-                    color: i.isEven ? AppColors.borderSoft : Colors.transparent,
-                  ),
-                ),
-              ),
-            ),
-        ],
+              child: const SizedBox.expand(),
+            );
+          },
+        ),
       ),
     );
+  }
+}
+
+class _ValueTrackPainter extends CustomPainter {
+  const _ValueTrackPainter({
+    required this.color,
+    required this.fraction,
+    required this.animationValue,
+  });
+
+  final Color color;
+  final double fraction;
+  final double animationValue;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final bgPaint = Paint()..color = AppColors.canvas;
+    canvas.drawRect(rect, bgPaint);
+
+    final w = size.width * fraction.clamp(0.0, 1.0);
+    if (w <= 0) return;
+
+    final progressRect = Rect.fromLTWH(0, 0, w, size.height);
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [color.withValues(alpha: 0.55), color],
+      ).createShader(progressRect);
+
+    canvas.drawRect(progressRect, fillPaint);
+
+    canvas.save();
+    canvas.clipRect(progressRect);
+
+    final stripePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.26)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.square;
+
+    const stripeSpacing = 12.0;
+    final offset = animationValue * stripeSpacing;
+
+    for (double x = -stripeSpacing; x < w + stripeSpacing; x += stripeSpacing) {
+      final startX = x + offset;
+      canvas.drawLine(
+        Offset(startX, 0),
+        Offset(startX - 4, size.height),
+        stripePaint,
+      );
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _ValueTrackPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.fraction != fraction ||
+        oldDelegate.animationValue != animationValue;
+  }
+}
+
+/// 工业仪表盘风格四角定位标线装饰器
+class TechCornerDecoration extends StatelessWidget {
+  const TechCornerDecoration({
+    required this.child,
+    this.color,
+    this.cornerSize = 7.0,
+    this.strokeWidth = 1.2,
+    super.key,
+  });
+
+  final Widget child;
+  final Color? color;
+  final double cornerSize;
+  final double strokeWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      foregroundPainter: _TechCornerPainter(
+        color: color ?? AppColors.primary.withValues(alpha: 0.45),
+        cornerSize: cornerSize,
+        strokeWidth: strokeWidth,
+      ),
+      child: child,
+    );
+  }
+}
+
+class _TechCornerPainter extends CustomPainter {
+  const _TechCornerPainter({
+    required this.color,
+    required this.cornerSize,
+    required this.strokeWidth,
+  });
+
+  final Color color;
+  final double cornerSize;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final w = size.width;
+    final h = size.height;
+    final s = cornerSize;
+
+    // 左上角 L
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, s)
+        ..lineTo(0, 0)
+        ..lineTo(s, 0),
+      paint,
+    );
+
+    // 右上角 L
+    canvas.drawPath(
+      Path()
+        ..moveTo(w - s, 0)
+        ..lineTo(w, 0)
+        ..lineTo(w, s),
+      paint,
+    );
+
+    // 左下角 L
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, h - s)
+        ..lineTo(0, h)
+        ..lineTo(s, h),
+      paint,
+    );
+
+    // 右下角 L
+    canvas.drawPath(
+      Path()
+        ..moveTo(w - s, h)
+        ..lineTo(w, h)
+        ..lineTo(w, h - s),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _TechCornerPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.cornerSize != cornerSize ||
+        oldDelegate.strokeWidth != strokeWidth;
+  }
+}
+
+/// 环绕跑马灯流光描边装饰器，用于表达设备“运行中/自检中”的高能活性。
+class FlowingBorderDecoration extends StatefulWidget {
+  const FlowingBorderDecoration({
+    required this.child,
+    required this.running,
+    required this.color,
+    this.radius = 11.0,
+    super.key,
+  });
+
+  final Widget child;
+  final bool running;
+  final Color color;
+  final double radius;
+
+  @override
+  State<FlowingBorderDecoration> createState() => _FlowingBorderDecorationState();
+}
+
+class _FlowingBorderDecorationState extends State<FlowingBorderDecoration>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2500),
+      vsync: this,
+    );
+    if (widget.running) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant FlowingBorderDecoration oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.running != oldWidget.running) {
+      if (widget.running) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+        _controller.reset();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.running) return widget.child;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          foregroundPainter: _FlowingBorderPainter(
+            color: widget.color,
+            radius: widget.radius,
+            animationValue: _controller.value,
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+class _FlowingBorderPainter extends CustomPainter {
+  const _FlowingBorderPainter({
+    required this.color,
+    required this.radius,
+    required this.animationValue,
+  });
+
+  final Color color;
+  final double radius;
+  final double animationValue;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final angle = animationValue * 2 * math.pi;
+    paint.shader = SweepGradient(
+      center: Alignment.center,
+      startAngle: angle,
+      endAngle: angle + 2 * math.pi,
+      colors: [
+        color.withValues(alpha: 0.05),
+        color,
+        color.withValues(alpha: 0.05),
+      ],
+      stops: const [0.0, 0.18, 0.35],
+    ).createShader(rect);
+
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _FlowingBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.animationValue != animationValue;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:icstudio_flutter/app/app_design.dart';
 import 'package:icstudio_flutter/app/app_theme.dart';
 import 'package:icstudio_flutter/src/rust/api/connection.dart';
@@ -638,85 +639,93 @@ class _SelfTestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: running
-              ? [
-                  AppColors.live.withValues(alpha: 0.12),
-                  AppColors.live.withValues(alpha: 0.02),
-                ]
-              : const [AppColors.surface, AppColors.canvasAlt],
-        ),
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(
-          color: running
-              ? AppColors.live.withValues(alpha: 0.3)
-              : AppColors.borderSoft,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _SectionIcon(
-                icon: Icons.science_outlined,
-                color: running ? AppColors.live : AppColors.primary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '内置闭环自测',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      running ? '模拟器运行中' : '127.0.0.1:1502 · Unit 1',
-                      style: monoStyle(
-                        fontSize: 9.5,
-                        color: running ? AppColors.live : AppColors.textFaint,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return FlowingBorderDecoration(
+      running: running,
+      color: AppColors.live,
+      radius: 11,
+      child: TechCornerDecoration(
+        color: running ? AppColors.live.withValues(alpha: 0.5) : AppColors.borderSoft,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: running
+                  ? [
+                      AppColors.live.withValues(alpha: 0.12),
+                      AppColors.live.withValues(alpha: 0.02),
+                    ]
+                  : const [AppColors.surface, AppColors.canvasAlt],
+            ),
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(
+              color: running
+                  ? AppColors.live.withValues(alpha: 0.3)
+                  : AppColors.borderSoft,
+            ),
           ),
-          const SizedBox(height: 13),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _GlowWrap(
-                  enabled: !(busy || running),
-                  color: AppColors.primary,
-                  child: FilledButton.icon(
-                    key: const Key('start-self-test'),
-                    onPressed: busy || running ? null : onStart,
-                    icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                    label: const Text('启动自测'),
+              Row(
+                children: [
+                  _SectionIcon(
+                    icon: Icons.science_outlined,
+                    color: running ? AppColors.live : AppColors.primary,
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '内置闭环自测',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          running ? '模拟器运行中' : '127.0.0.1:1502 · Unit 1',
+                          style: monoStyle(
+                            fontSize: 9.5,
+                            color: running ? AppColors.live : AppColors.textFaint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                key: const Key('stop-self-test'),
-                onPressed: busy || !running ? null : onStop,
-                icon: const Icon(Icons.stop_rounded, size: 14),
-                label: const Text('停止自测'),
+              const SizedBox(height: 13),
+              Row(
+                children: [
+                  Expanded(
+                    child: _GlowWrap(
+                      enabled: !(busy || running),
+                      color: AppColors.primary,
+                      child: FilledButton.icon(
+                        key: const Key('start-self-test'),
+                        onPressed: busy || running ? null : onStart,
+                        icon: const Icon(Icons.play_arrow_rounded, size: 16),
+                        label: const Text('启动自测'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    key: const Key('stop-self-test'),
+                    onPressed: busy || !running ? null : onStop,
+                    icon: const Icon(Icons.stop_rounded, size: 14),
+                    label: const Text('停止自测'),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -732,7 +741,18 @@ class _MetricCard extends StatefulWidget {
 }
 
 class _MetricCardState extends State<_MetricCard> {
+  Offset _mousePos = Offset.zero;
   bool _hovered = false;
+
+  void _onHover(PointerHoverEvent event, BoxConstraints constraints) {
+    final size = Size(constraints.maxWidth, constraints.maxHeight);
+    final localPos = event.localPosition;
+    final dx = (localPos.dx / size.width) - 0.5;
+    final dy = (localPos.dy / size.height) - 0.5;
+    setState(() {
+      _mousePos = Offset(dx, dy);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -740,81 +760,114 @@ class _MetricCardState extends State<_MetricCard> {
     final color = _toneColor(metric.tone);
     final hasValue = metric.value.trim() != '--' && metric.value.trim().isNotEmpty;
     final fraction = _trackFraction(metric);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.fromLTRB(15, 14, 15, 13),
-        decoration: AppDecor.panel(
-          accent: _hovered && hasValue ? color : null,
-          accentOpacity: 0.8,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(_metricIcon(metric.key), size: 15, color: color),
+    final targetOffset = _hovered ? _mousePos : Offset.zero;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() {
+            _hovered = false;
+            _mousePos = Offset.zero;
+          }),
+          onHover: (event) => _onHover(event, constraints),
+          child: TweenAnimationBuilder<Offset>(
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            tween: Tween<Offset>(
+              begin: Offset.zero,
+              end: targetOffset,
+            ),
+            builder: (context, offset, child) {
+              final finalMatrix = Matrix4.identity()
+                ..setEntry(3, 2, 0.0016)
+                ..rotateX(-offset.dy * 0.16)
+                ..rotateY(offset.dx * 0.16);
+
+              return Transform(
+                transform: finalMatrix,
+                alignment: Alignment.center,
+                child: child,
+              );
+            },
+            child: TechCornerDecoration(
+              color: _hovered && hasValue ? color.withValues(alpha: 0.55) : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.fromLTRB(15, 14, 15, 13),
+                decoration: AppDecor.panel(
+                  accent: _hovered && hasValue ? color : null,
+                  accentOpacity: 0.8,
                 ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    metric.label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(_metricIcon(metric.key), size: 15, color: color),
+                        ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            metric.label,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        StatusDot(
+                          color: hasValue ? color : AppColors.textFaint,
+                          size: 7,
+                          glow: hasValue,
+                        ),
+                      ],
                     ),
-                  ),
+                    const Spacer(),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          metric.value,
+                          style: monoStyle(
+                            fontSize: 27,
+                            fontWeight: FontWeight.w700,
+                            color: hasValue ? AppColors.text : AppColors.textFaint,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          metric.unit,
+                          style: monoStyle(fontSize: 10.5, color: AppColors.textMuted),
+                        ),
+                        const Spacer(),
+                        Text(
+                          metric.helper,
+                          overflow: TextOverflow.ellipsis,
+                          style: monoStyle(fontSize: 9, color: color),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ValueTrack(color: color, fraction: fraction),
+                  ],
                 ),
-                StatusDot(
-                  color: hasValue ? color : AppColors.textFaint,
-                  size: 7,
-                  glow: hasValue,
-                ),
-              ],
+              ),
             ),
-            const Spacer(),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  metric.value,
-                  style: monoStyle(
-                    fontSize: 27,
-                    fontWeight: FontWeight.w700,
-                    color: hasValue ? AppColors.text : AppColors.textFaint,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  metric.unit,
-                  style: monoStyle(fontSize: 10.5, color: AppColors.textMuted),
-                ),
-                const Spacer(),
-                Text(
-                  metric.helper,
-                  overflow: TextOverflow.ellipsis,
-                  style: monoStyle(fontSize: 9, color: color),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ValueTrack(color: color, fraction: fraction),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
