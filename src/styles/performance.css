@@ -1,0 +1,23 @@
+.energy-line {
+  animation: none;
+}
+
+.energy-flow-panel:has(.status-success) .energy-line {
+  animation: energy-flow 1.9s linear infinite;
+}
+
+.energy-flow-panel:has(.status-success) .dc-line {
+  animation-duration: 1.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .energy-line,
+  .connection-pill.is-connected .status-dot,
+  .frame-log-button.is-running::after,
+  .simulator-live-banner.is-running .simulator-live-orb,
+  .simulator-signal-wave,
+  .simulator-signal-wave::before,
+  .simulator-signal-wave::after {
+    animation: none !important;
+  }
+}

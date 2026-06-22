@@ -1,0 +1,208 @@
+.global-frame-float {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.global-frame-float .global-frame-head {
+  min-width: 0;
+}
+
+.global-frame-float .global-frame-head > div:first-child {
+  min-width: 0;
+}
+
+.global-frame-float .global-frame-head small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-frame-tools button {
+  gap: 6px;
+  width: auto;
+  min-width: 34px;
+  padding: 0 9px;
+  border-radius: 8px;
+}
+
+.global-frame-tools button.active {
+  border-color: rgba(110, 243, 165, 0.46);
+  background: rgba(20, 83, 45, 0.34);
+  color: var(--green);
+}
+
+.global-frame-toolbar {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(132, 196, 255, 0.14);
+}
+
+.global-frame-search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(132, 196, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(5, 16, 31, 0.52);
+  color: var(--muted);
+}
+
+.global-frame-search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.global-frame-search input::placeholder {
+  color: rgba(173, 195, 219, 0.62);
+}
+
+.global-frame-streams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(180px, 0.64fr);
+  gap: 10px;
+  min-height: 0;
+  padding: 12px 14px;
+}
+
+.global-frame-stream {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(132, 196, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.global-frame-stream > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(132, 196, 255, 0.12);
+}
+
+.global-frame-stream > header span {
+  display: grid;
+  min-width: 28px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(132, 196, 255, 0.18);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.global-frame-stream.is-write {
+  border-color: rgba(110, 243, 165, 0.24);
+}
+
+.global-frame-stream.is-other {
+  border-color: rgba(167, 139, 250, 0.2);
+}
+
+.global-frame-stream .global-frame-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+.global-frame-float .global-frame-row {
+  display: grid;
+  grid-template-columns: 62px 38px minmax(0, 1fr);
+  gap: 7px;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid rgba(132, 196, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-align: left;
+}
+
+.global-frame-float .global-frame-row:hover,
+.global-frame-float .global-frame-row.selected {
+  border-color: rgba(34, 211, 238, 0.42);
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.global-frame-float .global-frame-row.response b {
+  color: var(--green);
+}
+
+.global-frame-float .global-frame-row span,
+.global-frame-float .global-frame-row small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.global-frame-float .global-frame-row b {
+  color: var(--cyan);
+  font-size: 12px;
+}
+
+.global-frame-float .global-frame-row code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-frame-float .global-frame-row small {
+  grid-column: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-frame-detail {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(132, 196, 255, 0.14);
+  background: rgba(5, 16, 31, 0.38);
+}
+
+.global-frame-detail > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.global-frame-detail span,
+.global-frame-detail small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.global-frame-detail code {
+  overflow: auto;
+  color: var(--text);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  white-space: nowrap;
+}
+
+.global-frame-detail.is-empty {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  .global-frame-streams {
+    grid-template-columns: 1fr;
+  }
+}
